@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -Command \"Get-ChildItem -Path node_modules -Recurse | Remove-Item -Force -Recurse -ErrorAction SilentlyContinue; Remove-Item -Force -Recurse node_modules -ErrorAction SilentlyContinue\")",
+      "Bash(npm install)",
+      "Bash(set NODE_OPTIONS=--max-old-space-size=4096)",
+      "Bash(NODE_OPTIONS=--max-old-space-size=4096 npm run build)",
+      "Bash(npm run dev)",
+      "Bash(NODE_OPTIONS=--max-old-space-size=4096 npx tsc --noEmit)",
+      "Bash(npx tsc --noEmit src/app/projects/[id]/page.tsx)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

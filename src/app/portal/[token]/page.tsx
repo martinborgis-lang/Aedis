@@ -9,9 +9,11 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
-  Camera,
-  Upload,
 } from "lucide-react";
+import { PhotoLightbox } from "@/components/PhotoLightbox";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 export default function ClientPortalPage() {
   const params = useParams();
@@ -22,7 +24,8 @@ export default function ClientPortalPage() {
   const [photos, setPhotos] = useState<Record<string, Photo[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [uploadingTaskId, setUploadingTaskId] = useState<string | null>(null);
+  const [lightboxTask, setLightboxTask] = useState<string | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
 
   const supabase = createClient();
 
@@ -37,7 +40,12 @@ export default function ClientPortalPage() {
             status: "active",
             client_name: "M. et Mme Dubois",
             client_email: null,
+            client_phone: null,
+            description: null,
+            start_date: null,
+            estimated_end_date: null,
             portal_token: token,
+            portal_enabled: true,
             user_id: "demo",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -48,12 +56,14 @@ export default function ClientPortalPage() {
               id: "demo-task-1",
               project_id: "demo-project-1",
               name: "Fondations",
-              description: "Coulage des fondations et élévation des murs",
+              description: "Coulage des fondations et \u00e9l\u00e9vation des murs",
               start_date: "2024-01-15",
               end_date: "2024-02-15",
               status: "completed",
               progress: 100,
               sort_order: 1,
+              trade: null,
+              dependencies: [],
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             },
@@ -67,19 +77,23 @@ export default function ClientPortalPage() {
               status: "in_progress",
               progress: 65,
               sort_order: 2,
+              trade: null,
+              dependencies: [],
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             },
             {
               id: "demo-task-3",
               project_id: "demo-project-1",
-              name: "Second œuvre",
-              description: "Plomberie, électricité et cloisons",
+              name: "Second \u0153uvre",
+              description: "Plomberie, \u00e9lectricit\u00e9 et cloisons",
               start_date: "2024-04-01",
               end_date: "2024-05-15",
               status: "pending",
               progress: 0,
               sort_order: 3,
+              trade: null,
+              dependencies: [],
               created_at: new Date().toISOString(),
               updated_at: new Date().toISOString(),
             },
@@ -96,7 +110,12 @@ export default function ClientPortalPage() {
             .single();
 
           if (projectError || !projectData) {
-            setError("Projet non trouvé");
+            setError("Projet non trouv\u00e9");
+            return;
+          }
+
+          if (!projectData.portal_enabled) {
+            setError("Ce portail n\u2019est pas activ\u00e9");
             return;
           }
 
@@ -141,79 +160,22 @@ export default function ClientPortalPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
-  const handleFileUpload = async (taskId: string, file: File) => {
-    setUploadingTaskId(taskId);
-
-    try {
-      const fileName = `${Date.now()}-${file.name}`;
-      const { data: uploadData, error: uploadError } = await supabase.storage
-        .from("photos")
-        .upload(fileName, file);
-
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("photos")
-        .getPublicUrl(uploadData.path);
-
-      const { data: photoData, error: photoError } = await supabase
-        .from("photos")
-        .insert({
-          project_id: project!.id,
-          task_id: taskId,
-          url: urlData.publicUrl,
-          caption: null,
-          uploaded_by: "client",
-        })
-        .select()
-        .single();
-
-      if (photoError) throw photoError;
-
-      if (photoData) {
-        setPhotos((prev) => ({
-          ...prev,
-          [taskId]: [...(prev[taskId] || []), photoData],
-        }));
-      }
-    } catch (err) {
-      console.error("Error uploading photo:", err);
-    } finally {
-      setUploadingTaskId(null);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return "bg-green-100 text-green-800";
-      case "in_progress":
-        return "bg-blue-100 text-blue-800";
-      case "pending":
-        return "bg-yellow-100 text-yellow-800";
-      default:
-        return "bg-gray-100 text-gray-800";
-    }
-  };
-
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "completed":
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+        return <CheckCircle2 className="h-4 w-4 text-emerald-600" />;
       case "in_progress":
-        return <Clock className="h-5 w-5 text-blue-600" />;
+        return <Clock className="h-4 w-4 text-blue-600" />;
       case "pending":
-        return <AlertCircle className="h-5 w-5 text-yellow-600" />;
+        return <AlertCircle className="h-4 w-4 text-amber-600" />;
       default:
-        return <Clock className="h-5 w-5 text-gray-600" />;
+        return <Clock className="h-4 w-4 text-muted-foreground" />;
     }
   };
 
   const overallProgress =
     tasks.length > 0
-      ? Math.round(
-          tasks.reduce((sum, task) => sum + task.progress, 0) / tasks.length
-        )
+      ? Math.round(tasks.reduce((sum, task) => sum + task.progress, 0) / tasks.length)
       : 0;
 
   const completedTasks = tasks.filter((task) => task.status === "completed");
@@ -221,228 +183,169 @@ export default function ClientPortalPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600">Chargement...</p>
-        </div>
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="animate-spin rounded-full h-6 w-6 border-2 border-primary border-t-transparent" />
       </div>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Projet non trouvé
-          </h1>
-          <p className="text-gray-600">
-            Veuillez vérifier que le lien est correct.
-          </p>
+          <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h1 className="text-xl font-semibold text-foreground mb-1">Projet non trouv&eacute;</h1>
+          <p className="text-sm text-muted-foreground">Veuillez v&eacute;rifier que le lien est correct.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {token?.startsWith("demo-") && (
-        <div className="bg-yellow-100 border-b border-yellow-200 px-4 py-2">
-          <p className="text-center text-yellow-800 font-medium">
-            Mode démonstration
-          </p>
+        <div className="border-b bg-warning/5 px-4 py-2">
+          <p className="text-center text-sm text-muted-foreground">Mode d&eacute;monstration</p>
         </div>
       )}
 
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Building2 className="h-8 w-8 text-blue-600" />
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Aedis</h1>
-                <p className="text-sm text-gray-600">Portail Client</p>
-              </div>
-            </div>
+      <header className="sticky top-0 z-40 border-b bg-card/80 backdrop-blur-sm">
+        <div className="max-w-4xl mx-auto flex h-14 items-center px-6">
+          <div className="flex items-center gap-2.5">
+            <Building2 className="h-5 w-5 text-primary" />
+            <span className="text-lg font-semibold tracking-tight text-primary">Aedis</span>
+            <span className="text-xs text-muted-foreground">Portail Client</span>
           </div>
         </div>
       </header>
 
-      <main className="max-w-4xl mx-auto px-4 py-8 space-y-8">
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                {project.name}
-              </h2>
-              <p className="text-gray-600 mt-1">{project.address}</p>
-              {project.client_name && (
-                <p className="text-sm text-gray-500 mt-1">
-                  Client: {project.client_name}
-                </p>
-              )}
-            </div>
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(
-                project.status
-              )}`}
-            >
-              {project.status === "completed"
-                ? "Terminé"
-                : project.status === "archived"
-                ? "Archivé"
-                : "Actif"}
-            </span>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Avancement global
-          </h3>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between text-sm text-gray-600 mb-2">
-                <span>Progression</span>
-                <span>{overallProgress}%</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-3">
-                <div
-                  className="bg-blue-600 h-3 rounded-full transition-all duration-300"
-                  style={{ width: `${overallProgress}%` }}
-                ></div>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 gap-4 pt-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">
-                  {tasks.length}
-                </div>
-                <div className="text-sm text-gray-600">Total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {completedTasks.length}
-                </div>
-                <div className="text-sm text-gray-600">Terminées</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {inProgressTasks.length}
-                </div>
-                <div className="text-sm text-gray-600">En cours</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">
-            Avancement des travaux
-          </h3>
-          <div className="space-y-6">
-            {tasks.map((task) => (
-              <div key={task.id} className="border rounded-lg p-4">
-                <div className="flex items-start space-x-3 mb-4">
-                  {getStatusIcon(task.status)}
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900">{task.name}</h4>
-                    {task.description && (
-                      <p className="text-gray-600 text-sm mt-1">
-                        {task.description}
-                      </p>
-                    )}
-                    <div className="text-sm text-gray-500 mt-2">
-                      {task.start_date} - {task.end_date}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <div className="flex justify-between text-sm text-gray-600 mb-2">
-                    <span>Progression</span>
-                    <span>{task.progress}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                      style={{ width: `${task.progress}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {photos[task.id] && photos[task.id].length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Camera className="h-4 w-4 text-gray-500" />
-                      <span className="text-sm text-gray-600">Photos</span>
-                    </div>
-                    <div className="grid grid-cols-4 gap-2">
-                      {photos[task.id].map((photo) => (
-                        <div
-                          key={photo.id}
-                          className="aspect-square bg-gray-100 rounded-lg overflow-hidden"
-                        >
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
-                            src={photo.url}
-                            alt="Photo du projet"
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
+      <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <CardTitle className="text-2xl">{project.name}</CardTitle>
+                <CardDescription className="text-base">{project.address}</CardDescription>
+                {project.client_name && (
+                  <p className="text-sm text-muted-foreground">Client: {project.client_name}</p>
                 )}
-
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    id={`upload-${task.id}`}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        handleFileUpload(task.id, file);
-                      }
-                    }}
-                  />
-                  <label
-                    htmlFor={`upload-${task.id}`}
-                    className="inline-flex items-center space-x-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
-                  >
-                    {uploadingTaskId === task.id ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                        <span className="text-sm">Envoi...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Upload className="h-4 w-4" />
-                        <span className="text-sm">Ajouter une photo</span>
-                      </>
-                    )}
-                  </label>
-                </div>
               </div>
-            ))}
-          </div>
-        </div>
+              <Badge
+                variant={project.status === "completed" ? "default" : "secondary"}
+                className={project.status === "completed" ? "bg-emerald-500 text-white" : "bg-accent text-accent-foreground"}
+              >
+                {project.status === "completed" ? "Termin\u00e9" : project.status === "archived" ? "Archiv\u00e9" : "Actif"}
+              </Badge>
+            </div>
+          </CardHeader>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Avancement global</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Progression</span>
+                <span className="font-medium">{overallProgress}%</span>
+              </div>
+              <Progress value={overallProgress} className="h-3" />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div className="text-center space-y-2">
+                <div className="rounded-full bg-accent/10 p-4 w-16 h-16 flex items-center justify-center mx-auto">
+                  <p className="text-xl font-bold text-accent">{tasks.length}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Total</p>
+              </div>
+              <div className="text-center space-y-2">
+                <div className="rounded-full bg-emerald-500/10 p-4 w-16 h-16 flex items-center justify-center mx-auto">
+                  <p className="text-xl font-bold text-emerald-600">{completedTasks.length}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">Termin&eacute;es</p>
+              </div>
+              <div className="text-center space-y-2">
+                <div className="rounded-full bg-blue-500/10 p-4 w-16 h-16 flex items-center justify-center mx-auto">
+                  <p className="text-xl font-bold text-blue-600">{inProgressTasks.length}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">En cours</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Avancement des travaux</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {tasks.map((task) => (
+                <Card key={task.id} className="border-l-4 border-l-accent/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3 mb-4">
+                      {getStatusIcon(task.status)}
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <h4 className="text-base font-semibold">{task.name}</h4>
+                        {task.description && <p className="text-sm text-muted-foreground">{task.description}</p>}
+                        <p className="text-xs text-muted-foreground">{task.start_date} — {task.end_date}</p>
+                      </div>
+                      <Badge
+                        variant={task.status === "completed" ? "default" : task.status === "in_progress" ? "secondary" : "outline"}
+                        className={task.status === "completed" ? "bg-emerald-500 text-white" : task.status === "in_progress" ? "bg-blue-500 text-white" : ""}
+                      >
+                        {task.status === "completed" ? "Terminé" : task.status === "in_progress" ? "En cours" : "En attente"}
+                      </Badge>
+                    </div>
+
+                    <div className="mb-4">
+                      <div className="flex justify-between text-sm mb-2">
+                        <span className="text-muted-foreground">Progression</span>
+                        <span className="font-medium">{task.progress}%</span>
+                      </div>
+                      <Progress value={task.progress} className="h-2" />
+                    </div>
+
+                    {photos[task.id] && photos[task.id].length > 0 && (
+                      <div className="space-y-3">
+                        <p className="text-sm font-medium text-muted-foreground">Photos ({photos[task.id].length})</p>
+                        <div className="grid grid-cols-4 gap-3">
+                          {photos[task.id].map((photo, i) => (
+                            <button
+                              key={photo.id}
+                              onClick={() => { setLightboxTask(task.id); setLightboxIndex(i); }}
+                              className="aspect-square rounded-lg overflow-hidden border-2 hover:border-accent transition-colors group"
+                            >
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={photo.url}
+                                alt={photo.caption || "Photo du projet"}
+                                className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </main>
 
-      <footer className="bg-white border-t mt-16">
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="text-center">
-            <p className="text-gray-500 text-sm">Propulsé par Aedis</p>
-            <p className="text-gray-400 text-xs mt-1">
-              Plateforme de suivi de chantier
-            </p>
-          </div>
+      <footer className="border-t mt-16">
+        <div className="max-w-4xl mx-auto px-6 py-6">
+          <p className="text-center text-xs text-muted-foreground">Propuls&eacute; par Aedis</p>
         </div>
       </footer>
+
+      {lightboxTask && photos[lightboxTask] && (
+        <PhotoLightbox photos={photos[lightboxTask]} initialIndex={lightboxIndex} onClose={() => setLightboxTask(null)} />
+      )}
     </div>
   );
 }
