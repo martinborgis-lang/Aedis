@@ -595,45 +595,19 @@ export default function ProjectDetailPage() {
       const generateProjectPDF = await loadPDFGenerator();
       const pdfBlob = await generateProjectPDF(project, tasks, allPhotos, reportNotes);
 
-      // Upload to Supabase Storage
+      // Direct browser download
       const fileName = `rapport_${project.name.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.pdf`;
-      const filePath = `${project.id}/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from("reports")
-        .upload(filePath, pdfBlob);
+      // Create blob URL and trigger download
+      const url = URL.createObjectURL(pdfBlob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      a.click();
+      URL.revokeObjectURL(url);
 
-      if (uploadError) throw uploadError;
-
-      const { data: urlData } = supabase.storage
-        .from("reports")
-        .getPublicUrl(filePath);
-
-      // Save report record to database
-      const { data: reportData, error: insertError } = await supabase
-        .from("reports")
-        .insert({
-          project_id: project.id,
-          pdf_url: urlData.publicUrl,
-          notes: reportNotes || null,
-        })
-        .select()
-        .single();
-
-      if (insertError) throw insertError;
-
-      if (reportData) {
-        setReports((prev) => [reportData, ...prev]);
-        setReportNotes("");
-
-        // Download the PDF
-        const link = document.createElement("a");
-        link.href = urlData.publicUrl;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-      }
+      // Clear notes after successful generation
+      setReportNotes("");
     } catch (error) {
       console.error("Error generating report:", error);
       alert("Erreur lors de la génération du rapport");
@@ -803,7 +777,7 @@ export default function ProjectDetailPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
-            Rapports ({reports.length})
+            Rapports (0)
           </button>
         </div>
 
@@ -1171,35 +1145,12 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
 
-            {reports.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Rapports générés</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {reports.map((report) => (
-                      <div key={report.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div className="space-y-1">
-                          <p className="text-sm font-medium">
-                            Rapport du {new Date(report.created_at).toLocaleDateString("fr-FR")}
-                          </p>
-                          {report.notes && (
-                            <p className="text-sm text-muted-foreground">{report.notes}</p>
-                          )}
-                        </div>
-                        <Button asChild size="sm" variant="outline">
-                          <a href={report.pdf_url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4 mr-2" />
-                            Télécharger
-                          </a>
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                <p>Les rapports sont téléchargés directement dans votre navigateur.</p>
+                <p className="text-sm mt-1">Utilisez le bouton "Générer un rapport PDF" ci-dessus.</p>
+              </CardContent>
+            </Card>
           </div>
         )}
       </main>

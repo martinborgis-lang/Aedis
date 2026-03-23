@@ -1,30 +1,15 @@
 "use client";
 
-import { Document, Page, Text, View, StyleSheet, Font, pdf } from "@react-pdf/renderer";
+import { Document, Page, Text, View, StyleSheet, pdf } from "@react-pdf/renderer";
 import { Project, Task, Photo } from "@/lib/types/database";
 import { TRADE_LABELS } from "@/lib/types/database";
-
-// Register Inter font
-Font.register({
-  family: "Inter",
-  fonts: [
-    {
-      src: "https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa1ZL7W0Q5nw.woff2",
-      fontWeight: 400,
-    },
-    {
-      src: "https://fonts.gstatic.com/s/inter/v12/UcC73FwrK3iLTeHuS_fvQtMwCp50KnMa0ZL7W0Q5nw.woff2",
-      fontWeight: 600,
-    },
-  ],
-});
 
 const styles = StyleSheet.create({
   page: {
     flexDirection: "column",
     backgroundColor: "#FFFFFF",
     padding: 40,
-    fontFamily: "Inter",
+    fontFamily: "Helvetica",
     fontSize: 11,
     lineHeight: 1.4,
   },
@@ -269,7 +254,7 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
   const completedTasks = tasks.filter(t => t.status === "completed");
 
   const totalProgress = tasks.length > 0
-    ? Math.round(tasks.reduce((sum, task) => sum + task.progress, 0) / tasks.length)
+    ? Math.round(tasks.reduce((sum, task) => sum + (task.progress || 0), 0) / tasks.length)
     : 0;
 
   const totalPhotos = Object.values(allPhotos).reduce((sum, photos) => sum + photos.length, 0);
@@ -302,7 +287,11 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "-";
-    return new Date(dateString + "T00:00:00").toLocaleDateString("fr-FR");
+    try {
+      return new Date(dateString + "T00:00:00").toLocaleDateString("fr-FR");
+    } catch {
+      return "-";
+    }
   };
 
   return (
@@ -311,7 +300,7 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <Text style={styles.title}>Rapport de Projet</Text>
-          <Text style={styles.subtitle}>{project.name}</Text>
+          <Text style={styles.subtitle}>{project.name || ''}</Text>
           <Text style={styles.date}>
             Généré le {new Date().toLocaleDateString("fr-FR")} à {new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
           </Text>
@@ -323,40 +312,40 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
           <View style={styles.projectInfo}>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Client :</Text>
-              <Text style={styles.infoValue}>{project.client_name}</Text>
+              <Text style={styles.infoValue}>{project.client_name || ''}</Text>
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.infoLabel}>Adresse :</Text>
-              <Text style={styles.infoValue}>{project.address}</Text>
+              <Text style={styles.infoValue}>{project.address || ''}</Text>
             </View>
             {project.client_email && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Email :</Text>
-                <Text style={styles.infoValue}>{project.client_email}</Text>
+                <Text style={styles.infoValue}>{project.client_email || ''}</Text>
               </View>
             )}
             {project.client_phone && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Téléphone :</Text>
-                <Text style={styles.infoValue}>{project.client_phone}</Text>
+                <Text style={styles.infoValue}>{project.client_phone || ''}</Text>
               </View>
             )}
             {project.start_date && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Début :</Text>
-                <Text style={styles.infoValue}>{formatDate(project.start_date)}</Text>
+                <Text style={styles.infoValue}>{formatDate(project.start_date) || ''}</Text>
               </View>
             )}
             {project.estimated_end_date && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Fin estimée :</Text>
-                <Text style={styles.infoValue}>{formatDate(project.estimated_end_date)}</Text>
+                <Text style={styles.infoValue}>{formatDate(project.estimated_end_date) || ''}</Text>
               </View>
             )}
             {project.description && (
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>Description :</Text>
-                <Text style={styles.infoValue}>{project.description}</Text>
+                <Text style={styles.infoValue}>{project.description || ''}</Text>
               </View>
             )}
           </View>
@@ -367,15 +356,15 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
           <Text style={styles.sectionTitle}>Statistiques du Projet</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{totalProgress}%</Text>
+              <Text style={styles.statNumber}>{`${totalProgress}%`}</Text>
               <Text style={styles.statLabel}>Avancement global</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{completedTasks.length}</Text>
+              <Text style={styles.statNumber}>{`${completedTasks.length}`}</Text>
               <Text style={styles.statLabel}>Tâches terminées</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{totalPhotos}</Text>
+              <Text style={styles.statNumber}>{`${totalPhotos}`}</Text>
               <Text style={styles.statLabel}>Photos ajoutées</Text>
             </View>
           </View>
@@ -383,27 +372,27 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
 
         {/* Tasks Section */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Détail des Tâches ({tasks.length})</Text>
+          <Text style={styles.sectionTitle}>{`Détail des Tâches (${tasks.length})`}</Text>
           {tasks
             .sort((a, b) => a.sort_order - b.sort_order)
             .map((task) => (
               <View key={task.id} style={styles.taskItem}>
                 <View style={styles.taskMain}>
-                  <Text style={styles.taskName}>{task.name}</Text>
+                  <Text style={styles.taskName}>{task.name || ''}</Text>
                   {task.description && (
-                    <Text style={styles.taskDescription}>{task.description}</Text>
+                    <Text style={styles.taskDescription}>{task.description || ''}</Text>
                   )}
                   <Text style={styles.taskDates}>
-                    {formatDate(task.start_date)} → {formatDate(task.end_date)}
+                    {formatDate(task.start_date) || ''} → {formatDate(task.end_date) || ''}
                   </Text>
                   {task.trade && (
                     <Text style={styles.taskTrade}>
-                      {TRADE_LABELS[task.trade] || task.trade}
+                      {TRADE_LABELS[task.trade] || task.trade || ''}
                     </Text>
                   )}
                   {allPhotos[task.id] && allPhotos[task.id].length > 0 && (
                     <Text style={styles.photoCount}>
-                      {allPhotos[task.id].length} photo{allPhotos[task.id].length > 1 ? "s" : ""}
+                      {`${allPhotos[task.id].length} photo${allPhotos[task.id].length > 1 ? "s" : ""}`}
                     </Text>
                   )}
                 </View>
@@ -412,9 +401,9 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
                     <Text style={styles.statusText}>{getStatusLabel(task.status)}</Text>
                   </View>
                   <View style={styles.progressContainer}>
-                    <View style={[styles.progressBar, { width: `${task.progress}%` }]} />
+                    <View style={[styles.progressBar, { width: `${task.progress || 0}%` }]} />
                   </View>
-                  <Text style={styles.progressText}>{task.progress}%</Text>
+                  <Text style={styles.progressText}>{`${task.progress || 0}%`}</Text>
                 </View>
               </View>
             ))}
@@ -430,11 +419,10 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
               <View key={task.id} style={styles.timelineItem}>
                 <View style={styles.timelineDot} />
                 <Text style={styles.timelineDate}>{formatDate(task.start_date)}</Text>
-                {/* eslint-disable-next-line react/no-unescaped-entities */}
                 <Text style={styles.timelineText}>
-                  {`Début de "${task.name}"`}
-                  {task.status === "completed" && " (Terminée)"}
-                  {task.status === "in_progress" && ` (${task.progress}%)`}
+                  {`Début de "${task.name || ''}"` +
+                   (task.status === "completed" ? " (Terminée)" : "") +
+                   (task.status === "in_progress" ? ` (${task.progress || 0}%)` : "")}
                 </Text>
               </View>
             ))}
@@ -444,15 +432,13 @@ const ProjectPDFDocument: React.FC<ProjectPDFReportProps> = ({
         {notes && (
           <View style={styles.notesSection}>
             <Text style={styles.notesTitle}>Notes du Rapport</Text>
-            <Text style={styles.notesText}>{notes}</Text>
+            <Text style={styles.notesText}>{notes || ''}</Text>
           </View>
         )}
 
         {/* Footer */}
         <Text style={styles.footer}>
-          Aedis - Plateforme de gestion de projets architecturaux
-          {"\n"}
-          Rapport généré automatiquement le {new Date().toLocaleDateString("fr-FR")}
+          Aedis - Plateforme de gestion de projets architecturaux{"\n"}Rapport généré automatiquement le {new Date().toLocaleDateString("fr-FR")}
         </Text>
       </Page>
     </Document>
