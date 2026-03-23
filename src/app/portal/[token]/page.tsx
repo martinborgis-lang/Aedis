@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/client";
 import { Project, Task, Photo } from "@/lib/types/database";
 import { useState, useEffect } from "react";
+import PascalViewer from "@/components/PascalViewer";
 import { useParams } from "next/navigation";
 import {
   Building2,
@@ -26,6 +27,7 @@ export default function ClientPortalPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxTask, setLightboxTask] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
+  const [sceneData, setSceneData] = useState<Record<string, unknown> | null>(null);
 
   const supabase = createClient();
 
@@ -46,6 +48,7 @@ export default function ClientPortalPage() {
             estimated_end_date: null,
             portal_token: token,
             portal_enabled: true,
+            model_url: null,
             user_id: "demo",
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString(),
@@ -145,6 +148,16 @@ export default function ClientPortalPage() {
               return acc;
             }, {} as Record<string, Photo[]>);
             setPhotos(photosByTask);
+          }
+
+          if (projectData.model_url) {
+            try {
+              const modelRes = await fetch(projectData.model_url);
+              const modelJson = await modelRes.json();
+              setSceneData(modelJson);
+            } catch (e) {
+              console.error("Error loading 3D model:", e);
+            }
           }
         }
       } catch {
@@ -335,6 +348,22 @@ export default function ClientPortalPage() {
             </div>
           </CardContent>
         </Card>
+        {project.model_url && sceneData && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Maquette 3D</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <PascalViewer
+                sceneData={sceneData}
+                height="500px"
+              />
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                Naviguez dans la maquette : cliquez et faites glisser pour pivoter, scroll pour zoomer
+              </p>
+            </CardContent>
+          </Card>
+        )}
       </main>
 
       <footer className="border-t mt-16">

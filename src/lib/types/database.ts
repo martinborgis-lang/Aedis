@@ -16,6 +16,7 @@ export interface Project {
   status: ProjectStatus;
   portal_token: string;
   portal_enabled: boolean;
+  model_url: string | null;
   created_at: string;
   updated_at: string;
   user_id: string;
