@@ -6,7 +6,7 @@ const loadPDFGenerator = () => import("@/components/ProjectPDFReport").then(m =>
 import { useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Camera, Copy, Check, ExternalLink, Settings, CalendarDays, Wrench, Link2, Pencil, X, FileText, Download } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Camera, Copy, Check, ExternalLink, Settings, CalendarDays, Wrench, Link2, Pencil, X, FileText, Download, Box } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,8 @@ import { PhotoUpload } from "@/components/PhotoUpload";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { PhotoThumbnailGrid } from "@/components/PhotoThumbnailGrid";
 import { ReservesList } from "@/components/ReservesList";
+import PascalViewer from "@/components/PascalViewer";
+import ModelUpload from "@/components/ModelUpload";
 import { useParams, useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -35,6 +37,7 @@ const DEMO_PROJECT: Project = {
   address: "123 Rue de la Paix, 75001 Paris",
   portal_token: "demo-token-123",
   portal_enabled: true,
+  model_url: null,
   user_id: "demo",
   created_at: "2024-01-15T10:00:00Z",
   updated_at: "2024-03-01T10:00:00Z",
@@ -127,8 +130,10 @@ export default function ProjectDetailPage() {
   const [saving, setSaving] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  const [activeTab, setActiveTab] = useState<"projet" | "reserves" | "rapports">("projet");
+  const [activeTab, setActiveTab] = useState<"projet" | "reserves" | "rapports" | "model">("projet");
   const [reportNotes, setReportNotes] = useState("");
+  const [modelUrl, setModelUrl] = useState<string | null>(null);
+  const [sceneData, setSceneData] = useState<Record<string, unknown> | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
@@ -156,6 +161,9 @@ export default function ProjectDetailPage() {
 
       setProject(projectData);
       setTasks(tasksData || []);
+      if (projectData?.model_url) {
+        setModelUrl(projectData.model_url);
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -655,6 +663,17 @@ export default function ProjectDetailPage() {
     }
   }, [selectedTaskId, fetchPhotos]);
 
+  useEffect(() => {
+    if (modelUrl) {
+      fetch(modelUrl)
+        .then((r) => r.json())
+        .then(setSceneData)
+        .catch(console.error);
+    } else {
+      setSceneData(null);
+    }
+  }, [modelUrl]);
+
   const ganttTasks = useMemo(() =>
     tasks.map((t) => ({
       id: t.id,
@@ -804,6 +823,17 @@ export default function ProjectDetailPage() {
             }`}
           >
             Rapports ({reports.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('model')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'model'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Box className="h-3.5 w-3.5" />
+            Maquette 3D
           </button>
         </div>
 
@@ -1199,6 +1229,48 @@ export default function ProjectDetailPage() {
                   </div>
                 </CardContent>
               </Card>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'model' && project && (
+          <div className="space-y-6">
+            <Card>
+              <CardContent className="p-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h3 className="text-sm font-medium text-blue-800 mb-1">
+                    Comment ajouter une maquette 3D ?
+                  </h3>
+                  <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                    <li>Créez votre maquette sur editor.pascal.app</li>
+                    <li>Exportez votre projet (Menu &rarr; Export &rarr; JSON)</li>
+                    <li>Uploadez le fichier .json ci-dessous</li>
+                  </ol>
+                </div>
+              </CardContent>
+            </Card>
+
+            <ModelUpload
+              projectId={project.id}
+              currentModelUrl={modelUrl}
+              onUploadSuccess={(url) => {
+                setModelUrl(url);
+              }}
+              onDelete={() => {
+                setModelUrl(null);
+                setSceneData(null);
+              }}
+            />
+
+            <PascalViewer
+              sceneData={sceneData}
+              height="600px"
+            />
+
+            {sceneData && (
+              <p className="text-xs text-gray-400 text-center">
+                Naviguez dans la maquette : cliquez et faites glisser pour pivoter, scroll pour zoomer
+              </p>
             )}
           </div>
         )}
