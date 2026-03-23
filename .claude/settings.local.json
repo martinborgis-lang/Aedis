@@ -4,7 +4,18 @@
       "Bash(npm install)",
       "Bash(npm run build)",
       "Bash(rm nul)",
-      "Bash(git add .)"
+      "Bash(git add .)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Project improvements and build verification\n\n- Verified build process works correctly\n- Cleaned up repository state\n- Removed unnecessary files\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(git push origin main)",
+      "Bash(git pull origin main)",
+      "Bash(npm info @pascal-app/viewer versions)",
+      "Bash(npm info @pascal-app/core versions)",
+      "Bash(npm install --legacy-peer-deps)",
+      "Bash(cat node_modules/@pascal-app/viewer/dist/index.d.ts)",
+      "Bash(cat node_modules/@pascal-app/core/dist/index.d.ts)",
+      "Bash(npm info @pascal-app/viewer@0.1.13 peerDependencies)",
+      "Bash(npm install @pascal-app/viewer@0.1.13 --legacy-peer-deps)",
+      "Bash(git checkout HEAD -- package-lock.json)"
     ],
     "deny": [],
     "ask": []

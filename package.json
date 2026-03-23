@@ -9,8 +9,8 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@pascal-app/core": "^0.2.0",
-    "@pascal-app/viewer": "^0.2.0",
+    "@pascal-app/core": "0.1.13",
+    "@pascal-app/viewer": "0.1.13",
     "@react-pdf/renderer": "^4.3.2",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.5.0",
