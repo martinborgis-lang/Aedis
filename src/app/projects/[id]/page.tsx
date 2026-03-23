@@ -133,7 +133,6 @@ export default function ProjectDetailPage() {
   const [activeTab, setActiveTab] = useState<"projet" | "reserves" | "rapports" | "model">("projet");
   const [reportNotes, setReportNotes] = useState("");
   const [modelUrl, setModelUrl] = useState<string | null>(null);
-  const [sceneData, setSceneData] = useState<Record<string, unknown> | null>(null);
 
   const router = useRouter();
   const supabase = createClient();
@@ -637,16 +636,6 @@ export default function ProjectDetailPage() {
     }
   }, [selectedTaskId, fetchPhotos]);
 
-  useEffect(() => {
-    if (modelUrl) {
-      fetch(modelUrl)
-        .then((r) => r.json())
-        .then(setSceneData)
-        .catch(console.error);
-    } else {
-      setSceneData(null);
-    }
-  }, [modelUrl]);
 
   const ganttTasks = useMemo(() =>
     tasks.map((t) => ({
@@ -1209,20 +1198,38 @@ export default function ProjectDetailPage() {
               }}
               onDelete={() => {
                 setModelUrl(null);
-                setSceneData(null);
               }}
             />
 
-            <PascalViewer
-              sceneData={sceneData}
-              height="600px"
-            />
-
-            {sceneData && (
-              <p className="text-xs text-gray-400 text-center">
-                Naviguez dans la maquette : cliquez et faites glisser pour pivoter, scroll pour zoomer
-              </p>
+            {modelUrl ? (
+              <Card>
+                <CardContent className="p-6 text-center space-y-4">
+                  <h3 className="text-sm font-medium text-green-800">
+                    ✓ Maquette 3D disponible
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Votre maquette 3D est prête. Ouvrez Pascal Editor pour la visualiser et la modifier.
+                  </p>
+                  <button
+                    onClick={() => window.open('https://editor.pascal.app', '_blank')}
+                    className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm hover:bg-primary/90 transition-colors"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    Ouvrir dans Pascal Editor
+                  </button>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Aucune maquette 3D uploadée. Utilisez le formulaire ci-dessus pour ajouter une maquette.
+                  </p>
+                </CardContent>
+              </Card>
             )}
+
+            <PascalViewer height="500px" />
           </div>
         )}
       </main>

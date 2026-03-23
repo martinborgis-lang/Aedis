@@ -15,7 +15,9 @@
       "Bash(cat node_modules/@pascal-app/core/dist/index.d.ts)",
       "Bash(npm info @pascal-app/viewer@0.1.13 peerDependencies)",
       "Bash(npm install @pascal-app/viewer@0.1.13 --legacy-peer-deps)",
-      "Bash(git checkout HEAD -- package-lock.json)"
+      "Bash(git checkout HEAD -- package-lock.json)",
+      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Pascal package version conflict + stable build\n\n- Fixed @pascal-app/viewer and @pascal-app/core version compatibility\n- Downgraded to viewer@0.1.13 and core@0.1.13 for compatibility\n- Updated package.json to resolve ERESOLVE conflicts\n- Verified build now passes with \"✓ Compiled successfully\"\n- Pascal 3D viewer integration working\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
+      "Bash(npm uninstall @pascal-app/core @pascal-app/viewer @react-three/fiber @react-three/drei)"
     ],
     "deny": [],
     "ask": []

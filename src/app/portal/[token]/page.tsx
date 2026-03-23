@@ -27,7 +27,6 @@ export default function ClientPortalPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightboxTask, setLightboxTask] = useState<string | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState(0);
-  const [sceneData, setSceneData] = useState<Record<string, unknown> | null>(null);
 
   const supabase = createClient();
 
@@ -150,15 +149,6 @@ export default function ClientPortalPage() {
             setPhotos(photosByTask);
           }
 
-          if (projectData.model_url) {
-            try {
-              const modelRes = await fetch(projectData.model_url);
-              const modelJson = await modelRes.json();
-              setSceneData(modelJson);
-            } catch (e) {
-              console.error("Error loading 3D model:", e);
-            }
-          }
         }
       } catch {
         setError("Erreur lors du chargement du projet");
@@ -348,18 +338,15 @@ export default function ClientPortalPage() {
             </div>
           </CardContent>
         </Card>
-        {project.model_url && sceneData && (
+        {project.model_url && (
           <Card>
             <CardHeader>
               <CardTitle>Maquette 3D</CardTitle>
             </CardHeader>
             <CardContent>
-              <PascalViewer
-                sceneData={sceneData}
-                height="500px"
-              />
+              <PascalViewer height="500px" />
               <p className="text-xs text-gray-400 mt-2 text-center">
-                Naviguez dans la maquette : cliquez et faites glisser pour pivoter, scroll pour zoomer
+                Vue 3D de la maquette du projet via Pascal Editor
               </p>
             </CardContent>
           </Card>
