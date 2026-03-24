@@ -82,7 +82,10 @@ export default function Home() {
               Démarrer gratuitement
               <ArrowRight className="w-4 h-4" />
             </Link>
-            <button className="border border-border hover:bg-card text-foreground px-8 py-4 rounded-lg font-medium inline-flex items-center gap-2 transition-colors">
+            <button
+              onClick={() => document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' })}
+              className="border border-border hover:bg-card text-foreground px-8 py-4 rounded-lg font-medium inline-flex items-center gap-2 transition-colors"
+            >
               <Play className="w-4 h-4" />
               Voir la démo
             </button>
