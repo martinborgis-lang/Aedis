@@ -99,4 +99,16 @@
   .pulse-dot {
     animation: breathe 2s ease-in-out infinite;
   }
+
+  /* Hero text staggered fade in animation */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

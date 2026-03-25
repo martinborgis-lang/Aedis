@@ -5,6 +5,9 @@ import Link from "next/link";
 import { ArrowRight, Play, TrendingUp, Users, DollarSign, Building } from "lucide-react";
 import BlueprintAnimation from "@/components/BlueprintAnimation";
 import MiniGanttDemo from "@/components/MiniGanttDemo";
+import AnimatedStat from "@/components/AnimatedStat";
+import AnimatedCard from "@/components/AnimatedCard";
+import AnimatedTitle from "@/components/AnimatedTitle";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -37,8 +40,16 @@ export default function Home() {
   return (
     <div className="landing-dark min-h-screen bg-background text-foreground">
       {/* Fixed Navbar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+      <nav style={{
+        position: 'fixed',
+        top: 0,
+        width: '100%',
+        zIndex: 100,
+        backdropFilter: 'blur(16px)',
+        background: 'rgba(0,5,16,0.3)',
+        padding: '20px 60px'
+      }}>
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="font-syne text-xl" style={{ color: 'rgba(255,255,255,0.85)' }}>Aedis</div>
           <div className="hidden md:flex items-center space-x-8">
             <a href="#features" style={{ color: 'rgba(255,255,255,0.55)' }} className="hover:text-foreground transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.55)'}>Fonctionnalités</a>
@@ -74,36 +85,42 @@ export default function Home() {
       {/* Hero Section */}
       <section style={{
         position: 'relative',
-        height: '100vh',
-        width: '100%',
-        overflow: 'hidden',
+        minHeight: '100vh',
+        background: '#000510',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        background: '#000510'
+        overflow: 'hidden'
       }}>
-        {/* Animation fills hero only */}
-        <BlueprintAnimation />
-
-        {/* Vignette inside hero only */}
+        {/* Animation takes top 65% */}
         <div style={{
-          position: 'absolute',
-          inset: 0,
-          zIndex: 1,
-          pointerEvents: 'none',
-          background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,5,16,0.75) 100%)'
-        }} />
+          position: 'relative',
+          width: '100%',
+          height: '65vh',
+          flexShrink: 0
+        }}>
+          <BlueprintAnimation />
+          {/* Bottom fade from animation into text area */}
+          <div style={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: '200px',
+            background: 'linear-gradient(to bottom, transparent, #000510)',
+            zIndex: 5,
+            pointerEvents: 'none'
+          }} />
+        </div>
 
-        {/* Hero content bottom-left */}
+        {/* Text centered below animation */}
         <div style={{
-          position: 'absolute',
-          bottom: '10%',
-          left: '5%',
-          zIndex: 2,
-          textAlign: 'left',
-          maxWidth: '480px',
-          padding: '0'
+          position: 'relative',
+          zIndex: 10,
+          textAlign: 'center',
+          padding: '0 24px',
+          maxWidth: '600px',
+          marginTop: '-60px'
         }}>
           <div style={{
             display: 'inline-flex',
@@ -119,7 +136,8 @@ export default function Home() {
             letterSpacing: '0.1em',
             textTransform: 'uppercase',
             marginBottom: '16px',
-            opacity: 0.8
+            opacity: 0,
+            animation: 'fadeInUp 0.8s ease 0.2s forwards'
           }}>
             <span style={{
               width: '5px',
@@ -140,8 +158,8 @@ export default function Home() {
             marginBottom: '12px',
             fontFamily: 'var(--font-syne)'
           }}>
-            Gérez vos chantiers.<br/>
-            <em style={{ fontStyle: 'normal', color: 'rgba(255,122,61,0.75)' }}>
+            <span style={{ opacity: 0, animation: 'fadeInUp 0.8s ease 0.4s forwards' }}>Gérez vos chantiers.</span><br/>
+            <em style={{ fontStyle: 'normal', color: 'rgba(255,122,61,0.75)', opacity: 0, animation: 'fadeInUp 0.8s ease 0.6s forwards' }}>
               Votre réputation suit.
             </em>
           </h1>
@@ -152,7 +170,10 @@ export default function Home() {
             lineHeight: '1.6',
             marginBottom: '24px',
             fontWeight: '300',
-            maxWidth: '360px'
+            maxWidth: '360px',
+            margin: '0 auto 24px',
+            opacity: 0,
+            animation: 'fadeInUp 0.6s ease 0.8s forwards'
           }}>
             La plateforme collaborative qui connecte architectes, artisans et clients autour d'un seul outil.
           </p>
@@ -160,8 +181,11 @@ export default function Home() {
           <div style={{
             display: 'flex',
             alignItems: 'center',
+            justifyContent: 'center',
             gap: '10px',
-            flexWrap: 'wrap'
+            flexWrap: 'wrap',
+            opacity: 0,
+            animation: 'fadeInUp 0.6s ease 1.0s forwards'
           }}>
             <Link
               href="/auth"
@@ -225,34 +249,15 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Scroll indicator */}
-        <div style={{
-          position: 'absolute',
-          bottom: '32px',
-          right: '5%',
-          zIndex: 2,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '6px',
-          opacity: 0.25
-        }}>
-          <div style={{
-            width: '1px',
-            height: '40px',
-            background: 'linear-gradient(to bottom, rgba(255,255,255,0.8), transparent)'
-          }} />
-        </div>
-
-        {/* Bottom fade inside hero */}
+        {/* Continue fade to next section */}
         <div style={{
           position: 'absolute',
           bottom: 0,
           left: 0,
           right: 0,
-          height: '180px',
+          height: '120px',
           background: 'linear-gradient(to bottom, transparent, #000510)',
-          zIndex: 3,
+          zIndex: 10,
           pointerEvents: 'none'
         }} />
       </section>
@@ -260,15 +265,10 @@ export default function Home() {
       {/* Stats Bar */}
       <section
         style={{
-          background: '#000510',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)'
+          background: 'transparent'
         }}
       >
         <div style={{
-          background: '#000510',
-          borderTop: '1px solid rgba(255,255,255,0.06)',
-          borderBottom: '1px solid rgba(255,255,255,0.06)',
           padding: '28px 60px',
           display: 'flex',
           alignItems: 'center',
@@ -276,73 +276,23 @@ export default function Home() {
           gap: '80px',
           flexWrap: 'wrap'
         }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              fontFamily: 'var(--font-syne)',
-              fontSize: '32px',
-              color: 'white',
-              marginBottom: '4px'
-            }}>5h</div>
-            <div style={{
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.35)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase'
-            }}>gagnées par semaine</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              fontFamily: 'var(--font-syne)',
-              fontSize: '32px',
-              color: 'white',
-              marginBottom: '4px'
-            }}>3</div>
-            <div style={{
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.35)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase'
-            }}>rôles connectés</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              fontFamily: 'var(--font-syne)',
-              fontSize: '32px',
-              color: 'white',
-              marginBottom: '4px'
-            }}>0€</div>
-            <div style={{
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.35)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase'
-            }}>pour les artisans</div>
-          </div>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{
-              fontFamily: 'var(--font-syne)',
-              fontSize: '32px',
-              color: 'white',
-              marginBottom: '4px'
-            }}>118Md€</div>
-            <div style={{
-              fontSize: '12px',
-              color: 'rgba(255,255,255,0.35)',
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase'
-            }}>marché rénovation france</div>
-          </div>
+          <AnimatedStat value="5h" label="gagnées par semaine" />
+          <AnimatedStat value="3" label="rôles connectés" />
+          <AnimatedStat value="0" label="€ pour les artisans" />
+          <AnimatedStat value="118" label="Md€ marché France" />
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20" style={{ background: '#000510' }}>
+      <section id="features" className="py-20" style={{ background: 'rgba(255,255,255,0.015)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-syne mb-6">
-              Tout ce dont vous avez besoin pour{" "}
-              <span className="italic text-accent">réussir</span>
-            </h2>
+            <AnimatedTitle>
+              <h2 className="text-3xl md:text-5xl font-syne mb-6">
+                Tout ce dont vous avez besoin pour{" "}
+                <span className="italic text-accent">réussir</span>
+              </h2>
+            </AnimatedTitle>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Une suite complète d&apos;outils pensés pour l&apos;architecture moderne
             </p>
@@ -415,25 +365,25 @@ export default function Home() {
                 )
               }
             ].map((feature, index) => (
-              <div
-                key={index}
-                className="transition-all"
-                style={{
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: 0,
-                  padding: '40px 32px',
-                  transition: 'background 0.2s, border-color 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
-                  e.currentTarget.style.borderColor = 'rgba(255,122,61,0.25)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
-                }}
-              >
+              <AnimatedCard key={index} delay={index * 100}>
+                <div
+                  className="transition-all"
+                  style={{
+                    background: 'rgba(255,255,255,0.04)',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    borderRadius: 0,
+                    padding: '40px 32px',
+                    transition: 'background 0.2s, border-color 0.2s'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+                    e.currentTarget.style.borderColor = 'rgba(255,122,61,0.25)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                    e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
+                  }}
+                >
                 <div
                   className="mb-4"
                   style={{
@@ -471,20 +421,23 @@ export default function Home() {
                 >
                   {feature.description}
                 </p>
-              </div>
+                </div>
+              </AnimatedCard>
             ))}
           </div>
         </div>
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20" style={{ background: '#000510' }}>
+      <section id="how-it-works" className="py-20" style={{ background: 'transparent' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
-              <h2 className="text-3xl md:text-5xl font-syne">
-                Comment ça <span className="italic text-accent">marche</span>
-              </h2>
+              <AnimatedTitle>
+                <h2 className="text-3xl md:text-5xl font-syne">
+                  Comment ça <span className="italic text-accent">marche</span>
+                </h2>
+              </AnimatedTitle>
 
               {[
                 {
@@ -508,26 +461,28 @@ export default function Home() {
                   description: "Vos projets réussis alimentent automatiquement votre réputation"
                 }
               ].map((item, index) => (
-                <div key={index} className="flex gap-6">
-                  <div style={{
-                    color: '#FF7A3D',
-                    fontFamily: 'var(--font-syne)',
-                    fontSize: '18px',
-                    fontWeight: 'bold'
-                  }}>{item.step}</div>
-                  <div>
-                    <h3 style={{
-                      color: 'white',
-                      fontSize: '20px',
-                      fontWeight: '600',
-                      marginBottom: '8px'
-                    }}>{item.title}</h3>
-                    <p style={{
-                      color: 'rgba(255,255,255,0.5)',
-                      lineHeight: '1.6'
-                    }}>{item.description}</p>
+                <AnimatedCard key={index} delay={index * 150}>
+                  <div className="flex gap-6">
+                    <div style={{
+                      color: '#FF7A3D',
+                      fontFamily: 'var(--font-syne)',
+                      fontSize: '18px',
+                      fontWeight: 'bold'
+                    }}>{item.step}</div>
+                    <div>
+                      <h3 style={{
+                        color: 'white',
+                        fontSize: '20px',
+                        fontWeight: '600',
+                        marginBottom: '8px'
+                      }}>{item.title}</h3>
+                      <p style={{
+                        color: 'rgba(255,255,255,0.5)',
+                        lineHeight: '1.6'
+                      }}>{item.description}</p>
+                    </div>
                   </div>
-                </div>
+                </AnimatedCard>
               ))}
             </div>
 
@@ -539,89 +494,105 @@ export default function Home() {
       </section>
 
       {/* 3 Roles Section */}
-      <section id="roles" className="py-20" style={{ background: '#000510' }}>
+      <section id="roles" className="py-20" style={{ background: 'rgba(255,255,255,0.015)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-syne mb-6">
-              Trois rôles, <span className="italic text-accent">une vision</span>
-            </h2>
+            <AnimatedTitle>
+              <h2 className="text-3xl md:text-5xl font-syne mb-6">
+                Trois rôles, <span className="italic text-accent">une vision</span>
+              </h2>
+            </AnimatedTitle>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <div className="bg-card border border-border rounded-xl p-8">
-              <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-6">
-                <TrendingUp className="w-6 h-6 text-accent" />
+            <AnimatedCard scale={true} delay={0}>
+              <div className="bg-card border border-border rounded-xl p-8">
+                <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-6">
+                  <TrendingUp className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4">Architecte</h3>
+                <ul className="space-y-2 text-muted-foreground">
+                  <li>• Économise 5h/semaine</li>
+                  <li>• Zéro appel client</li>
+                  <li>• Portfolio automatique</li>
+                </ul>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Architecte</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>• Économise 5h/semaine</li>
-                <li>• Zéro appel client</li>
-                <li>• Portfolio automatique</li>
-              </ul>
-            </div>
+            </AnimatedCard>
 
-            <div className="bg-card border border-border rounded-xl p-8">
-              <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-6">
-                <Users className="w-6 h-6 text-accent" />
+            <AnimatedCard scale={true} delay={100}>
+              <div className="bg-card border border-border rounded-xl p-8">
+                <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-6">
+                  <Users className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4">Artisan</h3>
+                <ul className="space-y-2 text-muted-foreground">
+                  <li>• Gratuit à vie</li>
+                  <li>• Sa liste de tâches</li>
+                  <li>• Réputation vérifiable</li>
+                </ul>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Artisan</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>• Gratuit à vie</li>
-                <li>• Sa liste de tâches</li>
-                <li>• Réputation vérifiable</li>
-              </ul>
-            </div>
+            </AnimatedCard>
 
-            <div className="bg-card border border-border rounded-xl p-8">
-              <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-6">
-                <DollarSign className="w-6 h-6 text-accent" />
+            <AnimatedCard scale={true} delay={200}>
+              <div className="bg-card border border-border rounded-xl p-8">
+                <div className="w-12 h-12 bg-accent/20 rounded-lg flex items-center justify-center mb-6">
+                  <DollarSign className="w-6 h-6 text-accent" />
+                </div>
+                <h3 className="text-xl font-semibold mb-4">Client</h3>
+                <ul className="space-y-2 text-muted-foreground">
+                  <li>• Lien unique d&apos;acc&egrave;s</li>
+                  <li>• Progression temps réel</li>
+                  <li>• Timeline avec photos</li>
+                </ul>
               </div>
-              <h3 className="text-xl font-semibold mb-4">Client</h3>
-              <ul className="space-y-2 text-muted-foreground">
-                <li>• Lien unique d&apos;acc&egrave;s</li>
-                <li>• Progression temps réel</li>
-                <li>• Timeline avec photos</li>
-              </ul>
-            </div>
+            </AnimatedCard>
           </div>
         </div>
       </section>
 
       {/* Email Capture */}
-      <section className="py-20" style={{ background: '#000510' }}>
+      <section className="py-20" style={{ background: 'transparent' }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-5xl font-syne mb-6">
-            Votre prochain chantier mérite mieux que <span className="italic text-accent">WhatsApp</span>
-          </h2>
+          <AnimatedTitle>
+            <h2 className="text-3xl md:text-5xl font-syne mb-6">
+              Votre prochain chantier mérite mieux que <span className="italic text-accent">WhatsApp</span>
+            </h2>
+          </AnimatedTitle>
 
-          {submitted ? (
-            <div className="bg-accent/10 border border-accent/20 rounded-xl p-6">
-              <p className="text-accent font-semibold">Merci ! Vous serez parmi les premiers informés.</p>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
-              <input
-                type="email"
-                placeholder="votre@email.fr"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="flex-1 px-4 py-3 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
-                required
-              />
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
-              >
-                {isSubmitting ? "..." : "Demander l'accès"}
-              </button>
-            </form>
-          )}
+          <AnimatedCard style={{
+            background: 'radial-gradient(circle at center, rgba(255,122,61,0.08) 0%, transparent 70%)',
+            borderRadius: '24px',
+            padding: '40px 20px'
+          }}>
+            {submitted ? (
+              <div className="bg-accent/10 border border-accent/20 rounded-xl p-6">
+                <p className="text-accent font-semibold">Merci ! Vous serez parmi les premiers informés.</p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-md mx-auto">
+                <input
+                  type="email"
+                  placeholder="votre@email.fr"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 px-4 py-3 bg-input border border-border rounded-lg text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-accent focus:border-transparent outline-none"
+                  required
+                />
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="bg-accent hover:bg-accent/90 text-accent-foreground px-6 py-3 rounded-lg font-medium transition-colors disabled:opacity-50"
+                >
+                  {isSubmitting ? "..." : "Demander l'accès"}
+                </button>
+              </form>
+            )}
+          </AnimatedCard>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12" style={{ background: '#000510', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+      <footer className="py-12" style={{ background: 'transparent' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center text-muted-foreground">
             <p className="mb-4">© 2026 Aedis · du latin aedes : l&apos;édifice</p>
