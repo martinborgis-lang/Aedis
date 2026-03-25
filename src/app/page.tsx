@@ -54,17 +54,37 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ paddingTop: '30vh', paddingBottom: '30vh' }}>
-        {/* Blueprint Animation Background */}
-        <div className="absolute inset-0 z-0">
-          <BlueprintAnimation />
-        </div>
+      <section style={{
+        position: 'relative',
+        height: '100vh',
+        width: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#000510'
+      }}>
+        {/* Animation fills hero only */}
+        <BlueprintAnimation />
 
-        {/* Subtle backdrop overlay for depth */}
-        <div className="absolute inset-0 z-5" style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%)' }} />
+        {/* Vignette inside hero only */}
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 1,
+          pointerEvents: 'none',
+          background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,5,16,0.75) 100%)'
+        }} />
 
-        {/* Hero Content */}
-        <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
+        {/* Hero content on top */}
+        <div style={{
+          position: 'relative',
+          zIndex: 2,
+          textAlign: 'center',
+          padding: '0 24px',
+          maxWidth: '700px'
+        }}>
           <div
             className="inline-flex items-center gap-2 rounded-full mb-8"
             style={{
@@ -168,106 +188,100 @@ export default function Home() {
             </Link>
           </div>
         </div>
+
+        {/* Bottom fade inside hero */}
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: '180px',
+          background: 'linear-gradient(to bottom, transparent, #000510)',
+          zIndex: 3,
+          pointerEvents: 'none'
+        }} />
       </section>
 
       {/* Stats Bar */}
       <section
-        className="border-y"
         style={{
-          background: 'rgba(0,0,0,0.4)',
-          backdropFilter: 'blur(12px)',
+          background: '#000510',
           borderTop: '1px solid rgba(255,255,255,0.06)',
           borderBottom: '1px solid rgba(255,255,255,0.06)'
         }}
       >
-        <div className="max-w-6xl mx-auto px-6 py-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div
-                className="mb-1 text-white"
-                style={{
-                  fontFamily: 'var(--font-syne)',
-                  fontSize: '32px'
-                }}
-              >
-                5h
-              </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.4)',
-                  letterSpacing: '0.05em'
-                }}
-              >
-                gagnées par semaine
-              </div>
-            </div>
-            <div className="text-center">
-              <div
-                className="mb-1 text-white"
-                style={{
-                  fontFamily: 'var(--font-syne)',
-                  fontSize: '32px'
-                }}
-              >
-                3
-              </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.4)',
-                  letterSpacing: '0.05em'
-                }}
-              >
-                rôles connectés
-              </div>
-            </div>
-            <div className="text-center">
-              <div
-                className="mb-1 text-white"
-                style={{
-                  fontFamily: 'var(--font-syne)',
-                  fontSize: '32px'
-                }}
-              >
-                0€
-              </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.4)',
-                  letterSpacing: '0.05em'
-                }}
-              >
-                pour les artisans
-              </div>
-            </div>
-            <div className="text-center">
-              <div
-                className="mb-1 text-white"
-                style={{
-                  fontFamily: 'var(--font-syne)',
-                  fontSize: '32px'
-                }}
-              >
-                118Md€
-              </div>
-              <div
-                style={{
-                  fontSize: '12px',
-                  color: 'rgba(255,255,255,0.4)',
-                  letterSpacing: '0.05em'
-                }}
-              >
-                marché rénovation France
-              </div>
-            </div>
+        <div style={{
+          background: '#000510',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+          padding: '28px 60px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '80px',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontFamily: 'var(--font-syne)',
+              fontSize: '32px',
+              color: 'white',
+              marginBottom: '4px'
+            }}>5h</div>
+            <div style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.35)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
+            }}>gagnées par semaine</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontFamily: 'var(--font-syne)',
+              fontSize: '32px',
+              color: 'white',
+              marginBottom: '4px'
+            }}>3</div>
+            <div style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.35)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
+            }}>rôles connectés</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontFamily: 'var(--font-syne)',
+              fontSize: '32px',
+              color: 'white',
+              marginBottom: '4px'
+            }}>0€</div>
+            <div style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.35)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
+            }}>pour les artisans</div>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              fontFamily: 'var(--font-syne)',
+              fontSize: '32px',
+              color: 'white',
+              marginBottom: '4px'
+            }}>118Md€</div>
+            <div style={{
+              fontSize: '12px',
+              color: 'rgba(255,255,255,0.35)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase'
+            }}>marché rénovation france</div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20">
+      <section id="features" className="py-20" style={{ background: '#020818' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-syne mb-6">
@@ -348,12 +362,21 @@ export default function Home() {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="transition-all hover:border-[rgba(255,122,61,0.2)]"
+                className="transition-all"
                 style={{
-                  background: 'rgba(255,255,255,0.03)',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  borderRadius: '0',
-                  padding: '40px 36px'
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: 0,
+                  padding: '40px 32px',
+                  transition: 'background 0.2s, border-color 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.07)';
+                  e.currentTarget.style.borderColor = 'rgba(255,122,61,0.25)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)';
                 }}
               >
                 <div
@@ -377,7 +400,9 @@ export default function Home() {
                   style={{
                     fontFamily: 'var(--font-syne)',
                     fontSize: '18px',
-                    fontWeight: '600'
+                    fontWeight: '600',
+                    color: 'white',
+                    opacity: 0.9
                   }}
                 >
                   {feature.title}
@@ -398,7 +423,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20 bg-card/30">
+      <section id="how-it-works" className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -429,19 +454,49 @@ export default function Home() {
                 }
               ].map((item, index) => (
                 <div key={index} className="flex gap-6">
-                  <div className="text-accent font-syne text-lg font-bold">{item.step}</div>
+                  <div style={{
+                    color: '#FF7A3D',
+                    fontFamily: 'var(--font-syne)',
+                    fontSize: '18px',
+                    fontWeight: 'bold'
+                  }}>{item.step}</div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                    <p className="text-muted-foreground">{item.description}</p>
+                    <h3 style={{
+                      color: 'white',
+                      fontSize: '20px',
+                      fontWeight: '600',
+                      marginBottom: '8px'
+                    }}>{item.title}</h3>
+                    <p style={{
+                      color: 'rgba(255,255,255,0.5)',
+                      lineHeight: '1.6'
+                    }}>{item.description}</p>
                   </div>
                 </div>
               ))}
             </div>
 
-            <div className="bg-gradient-to-br from-accent/20 to-accent/5 rounded-2xl p-8 aspect-square flex items-center justify-center">
-              <div className="text-center">
-                <Building className="w-16 h-16 text-accent mx-auto mb-4" />
-                <p className="text-muted-foreground">Interface collaborative en action</p>
+            <div style={{
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '16px',
+              padding: '32px',
+              aspectRatio: '1',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <div style={{ textAlign: 'center' }}>
+                <Building style={{
+                  width: '64px',
+                  height: '64px',
+                  color: '#FF7A3D',
+                  margin: '0 auto 16px'
+                }} />
+                <p style={{
+                  color: 'rgba(255,255,255,0.5)',
+                  fontSize: '14px'
+                }}>Interface collaborative en action</p>
               </div>
             </div>
           </div>
@@ -449,7 +504,7 @@ export default function Home() {
       </section>
 
       {/* 3 Roles Section */}
-      <section id="roles" className="py-20">
+      <section id="roles" className="py-20" style={{ background: '#020818' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-syne mb-6">
@@ -498,7 +553,7 @@ export default function Home() {
       </section>
 
       {/* Email Capture */}
-      <section className="py-20 bg-card/30">
+      <section className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
           <h2 className="text-3xl md:text-5xl font-syne mb-6">
             Votre prochain chantier mérite mieux que <span className="italic text-accent">WhatsApp</span>
@@ -531,7 +586,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12">
+      <footer className="py-12" style={{ background: '#000510', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center text-muted-foreground">
             <p className="mb-4">© 2026 Aedis · du latin aedes : l&apos;édifice</p>

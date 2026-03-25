@@ -18,14 +18,15 @@ export default function BlueprintAnimation() {
       console.log('Three.js loaded, starting animation')
       const THREE = (window as any).THREE
 
-      const W = window.innerWidth, H = window.innerHeight
+      const w = canvas.clientWidth || canvas.offsetWidth
+      const h = canvas.clientHeight || canvas.offsetHeight
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true })
-      renderer.setSize(W, H)
+      renderer.setSize(w, h)
       renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
       renderer.setClearColor(0x000510, 1)
 
       const scene = new THREE.Scene()
-      const camera = new THREE.PerspectiveCamera(42, W/H, 0.1, 1000)
+      const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 1000)
       camera.position.set(22, 16, 22)
       camera.lookAt(0, 4, 0)
 
@@ -372,8 +373,8 @@ export default function BlueprintAnimation() {
       animate(0)
 
       const handleResize = () => {
-        const w = window.innerWidth
-        const h = window.innerHeight
+        const w = canvas.clientWidth || canvas.offsetWidth
+        const h = canvas.clientHeight || canvas.offsetHeight
         renderer.setSize(w, h)
         camera.aspect = w/h
         camera.updateProjectionMatrix()
@@ -397,14 +398,14 @@ export default function BlueprintAnimation() {
     <canvas
       ref={canvasRef}
       style={{
-        position: 'fixed',
+        position: 'absolute',
         top: 0,
         left: 0,
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         zIndex: 0,
         display: 'block',
-        opacity: 0.65,
+        opacity: 0.7,
         pointerEvents: 'none'
       }}
     />
