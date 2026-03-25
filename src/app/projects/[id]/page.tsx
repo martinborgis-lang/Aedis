@@ -6,7 +6,7 @@ const loadPDFGenerator = () => import("@/components/ProjectPDFReport").then(m =>
 import { useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Camera, Copy, Check, ExternalLink, Settings, CalendarDays, Wrench, Link2, Pencil, X, FileText, Download, Box } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Camera, Copy, Check, ExternalLink, Settings, CalendarDays, Wrench, Link2, Pencil, X, FileText, Download, Box, Euro, Edit3, FolderOpen, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,8 @@ import { PhotoThumbnailGrid } from "@/components/PhotoThumbnailGrid";
 import { ReservesList } from "@/components/ReservesList";
 import PascalViewer from "@/components/PascalViewer";
 import ModelUpload from "@/components/ModelUpload";
+import ReminderHistory from "@/components/ReminderHistory";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useParams, useRouter } from "next/navigation";
 import { StatusBadge } from "@/components/StatusBadge";
 import { ProgressBar } from "@/components/ProgressBar";
@@ -114,6 +116,7 @@ export default function ProjectDetailPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [artisanTokens, setArtisanTokens] = useState<Record<string, ArtisanToken[]>>({});
   const [artisanNameInput, setArtisanNameInput] = useState<Record<string, string>>({});
+  const [artisanEmailInput, setArtisanEmailInput] = useState<Record<string, string>>({});
   const [showArtisanForm, setShowArtisanForm] = useState<string | null>(null);
   const [copiedArtisanToken, setCopiedArtisanToken] = useState<string | null>(null);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -130,9 +133,18 @@ export default function ProjectDetailPage() {
   const [saving, setSaving] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  const [activeTab, setActiveTab] = useState<"projet" | "reserves" | "rapports" | "model">("projet");
+  const [activeTab, setActiveTab] = useState<"projet" | "reserves" | "rapports" | "model" | "budget" | "documents" | "rappels">("projet");
   const [reportNotes, setReportNotes] = useState("");
   const [modelUrl, setModelUrl] = useState<string | null>(null);
+  const [editingBudget, setEditingBudget] = useState<string | null>(null);
+  const [budgetValues, setBudgetValues] = useState<Record<string, { prevu: number; depense: number }>>({});
+  const [artisanDocuments, setArtisanDocuments] = useState<Record<string, any[]>>({});
+  const [showSendModal, setShowSendModal] = useState(false);
+  const [lastReportId, setLastReportId] = useState<string | null>(null);
+  const [sendToClient, setSendToClient] = useState(true);
+  const [customEmail, setCustomEmail] = useState('');
+  const [sendingReport, setSendingReport] = useState(false);
+  const [reportRecipients, setReportRecipients] = useState<Record<string, any[]>>({});
 
   const router = useRouter();
   const supabase = createClient();
@@ -540,6 +552,7 @@ export default function ProjectDetailPage() {
 
   const generateArtisanLink = async (taskId: string) => {
     const name = artisanNameInput[taskId]?.trim();
+    const email = artisanEmailInput[taskId]?.trim();
     if (!name || !project || isDemo) return;
 
     try {
@@ -550,6 +563,7 @@ export default function ProjectDetailPage() {
           project_id: project.id,
           task_id: taskId,
           artisan_name: name,
+          email: email || null,
           token: newToken,
         })
         .select()
@@ -563,6 +577,7 @@ export default function ProjectDetailPage() {
           [taskId]: [...(prev[taskId] || []), data],
         }));
         setArtisanNameInput((prev) => ({ ...prev, [taskId]: "" }));
+        setArtisanEmailInput((prev) => ({ ...prev, [taskId]: "" }));
         setShowArtisanForm(null);
       }
     } catch (error) {
@@ -588,6 +603,21 @@ export default function ProjectDetailPage() {
         .order("created_at", { ascending: false });
 
       setReports(data || []);
+
+      if (data && data.length > 0) {
+        // Fetch recipients for each report
+        const recipientsMap: Record<string, any[]> = {};
+        for (const report of data) {
+          const { data: recipients } = await supabase
+            .from('report_recipients')
+            .select('*')
+            .eq('report_id', report.id);
+          if (recipients) {
+            recipientsMap[report.id] = recipients;
+          }
+        }
+        setReportRecipients(recipientsMap);
+      }
     } catch (error) {
       console.error("Error fetching reports:", error);
     }
@@ -613,6 +643,23 @@ export default function ProjectDetailPage() {
       a.click();
       URL.revokeObjectURL(url);
 
+      // Save report to database
+      const { data: reportData } = await supabase
+        .from("reports")
+        .insert({
+          project_id: project.id,
+          pdf_url: fileName, // We'll store just the filename for now
+          notes: reportNotes,
+        })
+        .select()
+        .single();
+
+      if (reportData) {
+        setLastReportId(reportData.id);
+        setReports(prev => [reportData, ...prev]);
+        setShowSendModal(true);
+      }
+
       // Clear notes after successful generation
       setReportNotes("");
     } catch (error) {
@@ -623,12 +670,82 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const handleSendReport = async () => {
+    if (!lastReportId || sendingReport || !project) return;
+
+    const recipients = [];
+    if (sendToClient && project.client_email) {
+      recipients.push({ email: project.client_email, name: project.client_name });
+    }
+    if (customEmail.trim()) {
+      recipients.push({ email: customEmail.trim(), name: customEmail.trim() });
+    }
+
+    if (recipients.length === 0) return;
+
+    setSendingReport(true);
+
+    try {
+      const response = await fetch('/api/reports/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reportId: lastReportId,
+          projectId: project.id,
+          projectName: project.name,
+          recipients
+        })
+      });
+
+      if (response.ok) {
+        setShowSendModal(false);
+        setCustomEmail('');
+      }
+    } catch (error) {
+      console.error('Error sending report:', error);
+      alert('Erreur lors de l\'envoi du rapport');
+    } finally {
+      setSendingReport(false);
+    }
+  };
+
+  const fetchArtisanDocuments = useCallback(async () => {
+    if (isDemo) return;
+
+    try {
+      // Récupérer les artisans du projet
+      const { data: artisanTokens } = await supabase
+        .from('artisan_tokens')
+        .select('*')
+        .eq('project_id', projectId);
+
+      if (artisanTokens) {
+        const documentsMap: Record<string, any[]> = {};
+
+        // Pour chaque artisan, récupérer ses documents
+        for (const artisan of artisanTokens) {
+          const { data: documents } = await supabase
+            .from('artisan_documents')
+            .select('*')
+            .eq('artisan_token_id', artisan.id);
+
+          documentsMap[artisan.id] = documents || [];
+        }
+
+        setArtisanDocuments(documentsMap);
+      }
+    } catch (error) {
+      console.error("Error fetching artisan documents:", error);
+    }
+  }, [projectId, isDemo, supabase]);
+
   useEffect(() => {
     fetchProjectData();
     fetchAllPhotos();
     fetchArtisanTokens();
     fetchReports();
-  }, [fetchProjectData, fetchAllPhotos, fetchArtisanTokens, fetchReports]);
+    fetchArtisanDocuments();
+  }, [fetchProjectData, fetchAllPhotos, fetchArtisanTokens, fetchReports, fetchArtisanDocuments]);
 
   useEffect(() => {
     if (selectedTaskId) {
@@ -653,6 +770,82 @@ export default function ProjectDetailPage() {
     custom_popup_html: (task: { name: string; progress: number }) =>
       `<div class="p-2"><b>${task.name}</b><br/>Progression: ${task.progress}%</div>`,
   }), []);
+
+  // Calculs budgétaires
+  const budgetStats = useMemo(() => {
+    const totalPrevu = tasks.reduce((sum, t) => sum + ((t as any).budget_prevu || 0), 0);
+    const totalDepense = tasks.reduce((sum, t) => sum + ((t as any).budget_depense || 0), 0);
+    const reste = totalPrevu - totalDepense;
+    const pourcentage = totalPrevu > 0 ? (totalDepense / totalPrevu) * 100 : 0;
+    return { totalPrevu, totalDepense, reste, pourcentage };
+  }, [tasks]);
+
+  const chartData = useMemo(() =>
+    tasks
+      .filter(t => ((t as any).budget_prevu || 0) > 0)
+      .map(t => ({
+        name: t.name.substring(0, 15),
+        fullName: t.name,
+        prevu: (t as any).budget_prevu || 0,
+        depense: (t as any).budget_depense || 0,
+        depasse: ((t as any).budget_depense || 0) > ((t as any).budget_prevu || 0) * 1.1
+      })), [tasks]);
+
+
+  const requestArtisanDocuments = async (artisanTokenId: string) => {
+    if (isDemo) return;
+
+    const documentTypes = ['kbis', 'assurance_decennale', 'assurance_rc', 'rge'];
+
+    try {
+      for (const type of documentTypes) {
+        await supabase.from('artisan_documents').insert({
+          artisan_token_id: artisanTokenId,
+          project_id: projectId,
+          type,
+          status: 'missing'
+        });
+      }
+
+      fetchArtisanDocuments(); // Refresh data
+    } catch (error) {
+      console.error("Error requesting documents:", error);
+    }
+  };
+
+  const validateDocument = async (documentId: string, status: 'valid' | 'rejected') => {
+    if (isDemo) return;
+
+    try {
+      await supabase
+        .from('artisan_documents')
+        .update({ status })
+        .eq('id', documentId);
+
+      fetchArtisanDocuments(); // Refresh data
+    } catch (error) {
+      console.error("Error validating document:", error);
+    }
+  };
+
+  const updateTaskBudget = async (taskId: string, field: 'budget_prevu' | 'budget_depense', value: number) => {
+    if (isDemo) return;
+
+    try {
+      const { error } = await supabase
+        .from("tasks")
+        .update({ [field]: value })
+        .eq("id", taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTasks(tasks.map(t => t.id === taskId ? { ...t, [field]: value } : t));
+      setEditingBudget(null);
+    } catch (error) {
+      console.error("Error updating budget:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -786,6 +979,39 @@ export default function ProjectDetailPage() {
             }`}
           >
             Rapports (0)
+          </button>
+          <button
+            onClick={() => setActiveTab('budget')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'budget'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Euro className="h-3.5 w-3.5" />
+            Budget
+          </button>
+          <button
+            onClick={() => setActiveTab('documents')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'documents'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            Documents
+          </button>
+          <button
+            onClick={() => setActiveTab('rappels')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors flex items-center gap-1.5 ${
+              activeTab === 'rappels'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Mail className="h-3.5 w-3.5" />
+            Rappels
           </button>
           <button
             onClick={() => setActiveTab('model')}
@@ -1029,7 +1255,7 @@ export default function ProjectDetailPage() {
                           </div>
                         ))}
 
-                        <div className="flex items-center gap-2 mt-2">
+                        <div className="space-y-2 mt-2">
                           <input
                             type="text"
                             placeholder="Nom de l'artisan"
@@ -1037,14 +1263,23 @@ export default function ProjectDetailPage() {
                             onChange={(e) =>
                               setArtisanNameInput((prev) => ({ ...prev, [task.id]: e.target.value }))
                             }
-                            className="rounded-md border bg-background px-2 py-1 text-xs shadow-sm flex-1 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
-                            onKeyDown={(e) => e.key === "Enter" && generateArtisanLink(task.id)}
+                            className="w-full rounded-md border bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                          />
+                          <input
+                            type="email"
+                            placeholder="Email de l'artisan (optionnel)"
+                            value={artisanEmailInput[task.id] || ""}
+                            onChange={(e) =>
+                              setArtisanEmailInput((prev) => ({ ...prev, [task.id]: e.target.value }))
+                            }
+                            className="w-full rounded-md border bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                           />
                           <button
                             onClick={() => generateArtisanLink(task.id)}
-                            className="rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+                            disabled={!artisanNameInput[task.id]?.trim()}
+                            className="w-full rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
                           >
-                            G&eacute;n&eacute;rer
+                            G&eacute;n&eacute;rer le lien
                           </button>
                         </div>
                       </div>
@@ -1164,12 +1399,62 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
 
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                <p>Les rapports sont téléchargés directement dans votre navigateur.</p>
-                <p className="text-sm mt-1">Utilisez le bouton "Générer un rapport PDF" ci-dessus.</p>
-              </CardContent>
-            </Card>
+            {/* Reports list with read status */}
+            {reports.length > 0 ? (
+              <div className="space-y-4">
+                {reports.map(report => (
+                  <Card key={report.id}>
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-medium">Rapport du {new Date(report.created_at).toLocaleDateString('fr-FR')}</h4>
+                          {report.notes && (
+                            <p className="text-sm text-gray-600 mt-1">{report.notes}</p>
+                          )}
+                        </div>
+                        <span className="text-xs text-gray-400">
+                          {new Date(report.created_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
+                        </span>
+                      </div>
+
+                      {reportRecipients[report.id]?.map(r => (
+                        <div key={r.id} className="flex items-center gap-2 mt-2">
+                          <span className={`text-xs px-2 py-1 rounded-full ${
+                            r.opened_at
+                              ? 'bg-green-50 text-green-700'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {r.opened_at ? 'Lu' : 'Non lu'}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {r.recipient_name} ({r.recipient_email})
+                          </span>
+                          {r.opened_at && (
+                            <span className="text-xs text-gray-400">
+                              — ouvert le {new Date(r.opened_at).toLocaleDateString('fr-FR')}
+                              à {new Date(r.opened_at).toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}
+                            </span>
+                          )}
+                        </div>
+                      ))}
+
+                      {(!reportRecipients[report.id] || reportRecipients[report.id].length === 0) && (
+                        <div className="text-xs text-gray-400 mt-2">
+                          Rapport téléchargé seulement (non envoyé par email)
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center text-muted-foreground">
+                  <p>Aucun rapport généré pour ce projet.</p>
+                  <p className="text-sm mt-1">Utilisez le bouton "Générer un rapport PDF" ci-dessus.</p>
+                </CardContent>
+              </Card>
+            )}
           </div>
         )}
 
@@ -1230,6 +1515,384 @@ export default function ProjectDetailPage() {
             )}
 
             <PascalViewer height="500px" />
+          </div>
+        )}
+
+        {activeTab === 'rappels' && (
+          <div className="space-y-6">
+            {!process.env.NEXT_PUBLIC_BREVO_CONFIGURED && (
+              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p className="text-sm text-yellow-800">
+                  ⚠ Emails désactivés — Ajoutez BREVO_API_KEY dans .env.local
+                </p>
+              </div>
+            )}
+
+            {/* Rappels automatiques actifs */}
+            <div className="bg-white border border-gray-100 rounded-xl p-6">
+              <h3 className="font-medium mb-4">Rappels automatiques</h3>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-red-500">🔴</span>
+                  <div>
+                    <p className="text-sm font-medium">Tâche en retard</p>
+                    <p className="text-xs text-gray-500">Email automatique à l'artisan — tous les jours à 8h</p>
+                  </div>
+                  <span className="ml-auto text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">Actif</span>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-orange-500">⚠</span>
+                  <div>
+                    <p className="text-sm font-medium">Réserve assignée</p>
+                    <p className="text-xs text-gray-500">Email immédiat à l'artisan concerné</p>
+                  </div>
+                  <span className="ml-auto text-xs bg-green-50 text-green-700 px-2 py-1 rounded-full">Actif</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Historique emails */}
+            <div className="bg-white border border-gray-100 rounded-xl p-6">
+              <h3 className="font-medium mb-4">Historique des emails</h3>
+              <ReminderHistory projectId={project.id} />
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'budget' && (
+          <div className="space-y-6">
+            {/* Metrics Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Budget prévu</p>
+                      <p className="text-2xl font-semibold text-foreground">{budgetStats.totalPrevu.toLocaleString('fr-FR')} €</p>
+                    </div>
+                    <Euro className="h-8 w-8 text-[#E8650A]" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Dépensé</p>
+                      <p className="text-2xl font-semibold text-foreground">{budgetStats.totalDepense.toLocaleString('fr-FR')} €</p>
+                      <div className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-1 ${
+                        budgetStats.pourcentage >= 80 ? 'bg-red-50 text-red-700' : 'bg-orange-50 text-orange-700'
+                      }`}>
+                        {budgetStats.pourcentage.toFixed(0)}% consommé
+                      </div>
+                    </div>
+                    <Euro className="h-8 w-8 text-[#E8650A]" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">Reste</p>
+                      <p className={`text-2xl font-semibold ${budgetStats.reste < 0 ? 'text-red-600' : 'text-foreground'}`}>
+                        {budgetStats.reste.toLocaleString('fr-FR')} €
+                      </p>
+                    </div>
+                    <Euro className="h-8 w-8 text-[#E8650A]" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Progress Bar */}
+            <Card>
+              <CardContent className="p-6">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">Budget global</span>
+                    <span className="text-sm text-muted-foreground">{budgetStats.pourcentage.toFixed(1)}% du budget consommé</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-3">
+                    <div
+                      className={`h-3 rounded-full transition-all ${
+                        budgetStats.pourcentage >= 80 ? 'bg-red-500' : 'bg-[#E8650A]'
+                      }`}
+                      style={{ width: `${Math.min(budgetStats.pourcentage, 100)}%` }}
+                    />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Chart */}
+            {chartData.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Répartition budgétaire par tâche</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div style={{ width: '100%', height: '400px' }}>
+                    <ResponsiveContainer>
+                      <BarChart data={chartData}>
+                        <XAxis dataKey="name" />
+                        <YAxis tickFormatter={(value) => `${value}€`} />
+                        <Tooltip
+                          formatter={(value, name) => [`${value}€`, name === 'prevu' ? 'Budget prévu' : 'Dépensé']}
+                          labelFormatter={(label) => {
+                            const item = chartData.find(d => d.name === label);
+                            return item?.fullName || label;
+                          }}
+                        />
+                        <Legend />
+                        <Bar dataKey="prevu" fill="#E8650A" name="Budget prévu" />
+                        <Bar dataKey="depense" fill="#6B7280" name="Dépensé" />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Detailed Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Budget détaillé par tâche</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Tâche</th>
+                        <th className="text-left py-3 px-4 font-medium text-sm text-muted-foreground">Statut</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm text-muted-foreground">Prévu</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm text-muted-foreground">Dépensé</th>
+                        <th className="text-right py-3 px-4 font-medium text-sm text-muted-foreground">Écart</th>
+                        <th className="text-center py-3 px-4 font-medium text-sm text-muted-foreground">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {tasks.map((task) => {
+                        const budgetPrevu = (task as any).budget_prevu || 0;
+                        const budgetDepense = (task as any).budget_depense || 0;
+                        const ecart = budgetDepense - budgetPrevu;
+                        const ecartPourcentage = budgetPrevu > 0 ? (ecart / budgetPrevu) * 100 : 0;
+                        const isEditing = editingBudget === task.id;
+
+                        return (
+                          <tr key={task.id} className="border-b border-gray-100 hover:bg-gray-50">
+                            <td className="py-3 px-4">
+                              <div className="font-medium text-sm">{task.name}</div>
+                            </td>
+                            <td className="py-3 px-4">
+                              <StatusBadge status={task.status} />
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              {isEditing ? (
+                                <input
+                                  type="number"
+                                  defaultValue={budgetPrevu}
+                                  className="w-24 px-2 py-1 border border-gray-200 rounded text-sm text-right"
+                                  onBlur={(e) => updateTaskBudget(task.id, 'budget_prevu', parseFloat(e.target.value) || 0)}
+                                  autoFocus
+                                />
+                              ) : (
+                                <span className="text-sm">{budgetPrevu.toLocaleString('fr-FR')} €</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              {isEditing ? (
+                                <input
+                                  type="number"
+                                  defaultValue={budgetDepense}
+                                  className="w-24 px-2 py-1 border border-gray-200 rounded text-sm text-right"
+                                  onBlur={(e) => updateTaskBudget(task.id, 'budget_depense', parseFloat(e.target.value) || 0)}
+                                />
+                              ) : (
+                                <span className="text-sm">{budgetDepense.toLocaleString('fr-FR')} €</span>
+                              )}
+                            </td>
+                            <td className="py-3 px-4 text-right">
+                              <span className={`text-sm font-medium ${
+                                ecartPourcentage <= 0 ? 'text-green-600' :
+                                ecartPourcentage <= 10 ? 'text-orange-600' : 'text-red-600'
+                              }`}>
+                                {ecart > 0 ? '+' : ''}{ecart.toLocaleString('fr-FR')} €
+                              </span>
+                            </td>
+                            <td className="py-3 px-4 text-center">
+                              {!isDemo && (
+                                <button
+                                  onClick={() => setEditingBudget(editingBudget === task.id ? null : task.id)}
+                                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                >
+                                  <Edit3 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Budget Alert */}
+            {chartData.some(item => item.depasse) && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p className="text-sm text-red-800">
+                  ⚠ {chartData.filter(item => item.depasse).length} tâche(s) dépassent leur budget de plus de 10%
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {activeTab === 'documents' && (
+          <div className="space-y-6">
+            {isDemo ? (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Gestion des documents disponible après connexion
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-6">
+                {/* Liste des artisans et leurs documents */}
+                {Object.entries(artisanTokens).map(([taskId, tokens]) =>
+                  tokens.map((artisan) => {
+                    const documents = artisanDocuments[artisan.id] || [];
+                    const documentTypes = [
+                      { key: 'kbis', label: 'K-bis' },
+                      { key: 'assurance_decennale', label: 'Assurance décennale' },
+                      { key: 'assurance_rc', label: 'Assurance RC' },
+                      { key: 'rge', label: 'RGE' }
+                    ];
+
+                    return (
+                      <Card key={artisan.id}>
+                        <CardHeader>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <CardTitle className="text-lg">{artisan.artisan_name}</CardTitle>
+                              {artisan.artisan_email && (
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700">
+                                    📧 {artisan.artisan_email}
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            <button
+                              onClick={() => requestArtisanDocuments(artisan.id)}
+                              className="px-3 py-1 bg-[#E8650A] text-white rounded-lg text-sm font-medium hover:bg-[#E8650A]/90 transition-colors"
+                            >
+                              Demander les documents
+                            </button>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {documentTypes.map((docType) => {
+                            const document = documents.find(d => d.type === docType.key);
+                            const status = document?.status || 'missing';
+
+                            const getBadgeStyle = (status: string) => {
+                              switch (status) {
+                                case 'valid':
+                                  return 'bg-green-50 text-green-700';
+                                case 'pending':
+                                  return 'bg-yellow-50 text-yellow-700';
+                                case 'rejected':
+                                  return 'bg-red-50 text-red-700';
+                                default:
+                                  return 'bg-gray-50 text-gray-500';
+                              }
+                            };
+
+                            const getStatusLabel = (status: string) => {
+                              switch (status) {
+                                case 'valid':
+                                  return 'Valide';
+                                case 'pending':
+                                  return 'En attente';
+                                case 'rejected':
+                                  return 'Rejeté';
+                                default:
+                                  return 'Manquant';
+                              }
+                            };
+
+                            return (
+                              <div key={docType.key} className="flex items-center justify-between py-3 px-4 border border-gray-100 rounded-lg">
+                                <div className="flex items-center gap-3">
+                                  <span className="font-medium text-sm">{docType.label}</span>
+                                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getBadgeStyle(status)}`}>
+                                    {getStatusLabel(status)}
+                                  </span>
+                                  {document?.expiry_date && (
+                                    <span className="text-xs text-muted-foreground">
+                                      Expire le {new Date(document.expiry_date).toLocaleDateString('fr-FR')}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {status === 'pending' && (
+                                    <>
+                                      <button
+                                        onClick={() => validateDocument(document.id, 'valid')}
+                                        className="px-2 py-1 bg-green-50 text-green-700 rounded text-xs hover:bg-green-100 transition-colors"
+                                      >
+                                        ✓ Valider
+                                      </button>
+                                      <button
+                                        onClick={() => validateDocument(document.id, 'rejected')}
+                                        className="px-2 py-1 bg-red-50 text-red-700 rounded text-xs hover:bg-red-100 transition-colors"
+                                      >
+                                        ✗ Rejeter
+                                      </button>
+                                    </>
+                                  )}
+                                  {status === 'valid' && document?.file_url && (
+                                    <button
+                                      onClick={() => window.open(document.file_url, '_blank')}
+                                      className="px-2 py-1 bg-blue-50 text-blue-700 rounded text-xs hover:bg-blue-100 transition-colors"
+                                    >
+                                      👁 Voir
+                                    </button>
+                                  )}
+                                  {status === 'missing' && (
+                                    <button className="px-2 py-1 bg-orange-50 text-orange-700 rounded text-xs hover:bg-orange-100 transition-colors">
+                                      ✉ Relancer
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </CardContent>
+                      </Card>
+                    );
+                  })
+                )}
+
+                {Object.keys(artisanTokens).length === 0 && (
+                  <Card>
+                    <CardContent className="p-6 text-center">
+                      <p className="text-sm text-muted-foreground">
+                        Aucun artisan assigné à ce projet. Créez des liens artisan pour commencer à gérer les documents.
+                      </p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            )}
           </div>
         )}
       </main>
@@ -1344,6 +2007,61 @@ export default function ProjectDetailPage() {
                 className="px-4 py-2 text-sm font-medium bg-primary text-primary-foreground rounded-md shadow-sm hover:bg-primary/90 disabled:opacity-50 transition-colors"
               >
                 {saving ? "Enregistrement..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Send Report Modal */}
+      {showSendModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-medium mb-2">Envoyer le rapport</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Envoyez ce rapport par email pour suivre sa lecture.
+            </p>
+
+            {project.client_email && (
+              <label className="flex items-center gap-3 mb-3 cursor-pointer p-3 rounded-lg hover:bg-gray-50">
+                <input
+                  type="checkbox"
+                  checked={sendToClient}
+                  onChange={e => setSendToClient(e.target.checked)}
+                />
+                <div>
+                  <p className="text-sm font-medium">{project.client_name}</p>
+                  <p className="text-xs text-gray-500">{project.client_email}</p>
+                </div>
+              </label>
+            )}
+
+            <div className="mb-4">
+              <label className="text-sm text-gray-600 block mb-1">
+                Autre email (optionnel)
+              </label>
+              <input
+                type="email"
+                value={customEmail}
+                onChange={e => setCustomEmail(e.target.value)}
+                placeholder="email@exemple.fr"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowSendModal(false)}
+                className="flex-1 border border-gray-200 rounded-lg py-2 text-sm"
+              >
+                Fermer
+              </button>
+              <button
+                onClick={handleSendReport}
+                disabled={sendingReport}
+                className="flex-1 bg-[#E8650A] text-white rounded-lg py-2 text-sm font-medium"
+              >
+                {sendingReport ? 'Envoi...' : 'Envoyer'}
               </button>
             </div>
           </div>

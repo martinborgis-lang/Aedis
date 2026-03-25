@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/client";
 import { Task, Photo, ArtisanToken } from "@/lib/types/database";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
   Wrench,
@@ -13,6 +13,8 @@ import {
   Upload,
   X,
   Send,
+  FileText,
+  Download,
 } from "lucide-react";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,6 +25,32 @@ import { Button } from "@/components/ui/button";
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = ["image/jpeg", "image/png", "image/heic", "image/heif"];
 const ACCEPTED_EXTENSIONS = ".jpg,.jpeg,.png,.heic,.heif";
+
+const DOC_MAX_FILE_SIZE = 15 * 1024 * 1024;
+const DOC_ACCEPTED_TYPES = ["application/pdf", "image/jpeg", "image/png"];
+const DOC_ACCEPTED_EXTENSIONS = ".pdf,.jpg,.jpeg,.png";
+
+type DocumentType = "kbis" | "assurance_decennale" | "assurance_rc" | "rge";
+
+interface ArtisanDocument {
+  id: string;
+  artisan_email: string;
+  document_type: DocumentType;
+  file_url: string;
+  file_name: string;
+  status: "pending" | "validated" | "rejected";
+  rejection_reason?: string;
+  uploaded_at: string;
+  validated_at?: string;
+  validated_by?: string;
+}
+
+const DOCUMENT_LABELS: Record<DocumentType, string> = {
+  kbis: "K-bis",
+  assurance_decennale: "Assurance décennale",
+  assurance_rc: "Assurance RC",
+  rge: "Certification RGE"
+};
 
 export default function ArtisanPortalPage() {
   const params = useParams();
@@ -40,6 +68,15 @@ export default function ArtisanPortalPage() {
   const [uploading, setUploading] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
   const [fileErrors, setFileErrors] = useState<string[]>([]);
+  const [documents, setDocuments] = useState<ArtisanDocument[]>([]);
+  const [uploadingDocument, setUploadingDocument] = useState<DocumentType | null>(null);
+  const [documentErrors, setDocumentErrors] = useState<string[]>([]);
+  const fileInputRefs = useRef<Record<DocumentType, HTMLInputElement | null>>({
+    kbis: null,
+    assurance_decennale: null,
+    assurance_rc: null,
+    rge: null,
+  });
 
   const supabase = createClient();
 
@@ -76,6 +113,18 @@ export default function ArtisanPortalPage() {
 
       if (photosData) {
         setPhotos({ [tokenData.task_id]: photosData });
+      }
+
+      if (tokenData.artisan_email) {
+        const { data: documentsData } = await supabase
+          .from("artisan_documents")
+          .select("*")
+          .eq("artisan_email", tokenData.artisan_email)
+          .order("uploaded_at", { ascending: false });
+
+        if (documentsData) {
+          setDocuments(documentsData);
+        }
       }
     } catch {
       setError("Erreur lors du chargement");
@@ -202,6 +251,97 @@ export default function ArtisanPortalPage() {
     setUploading(null);
     setUploadSuccess(taskId);
     setTimeout(() => setUploadSuccess((prev) => (prev === taskId ? null : prev)), 4000);
+  };
+
+  const uploadDocument = async (documentType: DocumentType, file: File) => {
+    if (!artisanToken?.artisan_email) return;
+
+    setUploadingDocument(documentType);
+    setDocumentErrors([]);
+
+    try {
+      if (file.size > DOC_MAX_FILE_SIZE) {
+        setDocumentErrors(["Fichier trop volumineux (15 Mo maximum)"]);
+        return;
+      }
+
+      const fileName = `${Date.now()}-${file.name}`;
+      const filePath = `documents/${artisanToken.artisan_email}/${documentType}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("documents")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("documents")
+        .getPublicUrl(filePath);
+
+      const { data: docData, error: docError } = await supabase
+        .from("artisan_documents")
+        .insert({
+          artisan_email: artisanToken.artisan_email,
+          document_type: documentType,
+          file_url: urlData.publicUrl,
+          file_name: file.name,
+          status: "pending",
+          uploaded_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
+
+      if (docError) throw docError;
+
+      if (docData) {
+        setDocuments(prev => [docData, ...prev.filter(d => d.document_type !== documentType)]);
+      }
+    } catch (err) {
+      console.error("Error uploading document:", err);
+      setDocumentErrors(["Erreur lors de l'envoi du document"]);
+    } finally {
+      setUploadingDocument(null);
+    }
+  };
+
+  const handleDocumentUpload = (documentType: DocumentType, file: File) => {
+    const errors: string[] = [];
+
+    if (file.size > DOC_MAX_FILE_SIZE) {
+      errors.push("Fichier trop volumineux (15 Mo maximum)");
+    }
+
+    const fileType = file.type.toLowerCase();
+    const ext = file.name.toLowerCase().split(".").pop();
+    if (!DOC_ACCEPTED_TYPES.includes(fileType) && !["pdf", "jpg", "jpeg", "png"].includes(ext || "")) {
+      errors.push("Format non supporté (PDF, JPG, PNG uniquement)");
+    }
+
+    if (errors.length > 0) {
+      setDocumentErrors(errors);
+      return;
+    }
+
+    uploadDocument(documentType, file);
+  };
+
+  const getDocumentByType = (type: DocumentType) => {
+    return documents.find(doc => doc.document_type === type);
+  };
+
+  const getDocumentStatusBadge = (doc?: ArtisanDocument) => {
+    if (!doc) return <Badge variant="outline" className="text-gray-500 border-gray-300">Manquant</Badge>;
+
+    switch (doc.status) {
+      case "validated":
+        return <Badge className="bg-emerald-500 text-white">Validé</Badge>;
+      case "pending":
+        return <Badge className="bg-amber-500 text-white">En attente</Badge>;
+      case "rejected":
+        return <Badge variant="destructive">Rejeté</Badge>;
+      default:
+        return <Badge variant="outline">Inconnu</Badge>;
+    }
   };
 
   const getStatusIcon = (status: string) => {
@@ -435,6 +575,124 @@ export default function ArtisanPortalPage() {
           <div className="text-center py-12 text-sm text-muted-foreground">
             Aucune t&acirc;che assign&eacute;e.
           </div>
+        )}
+
+        {artisanToken?.artisan_email && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5 text-[#E8650A]" />
+                Mes documents
+              </CardTitle>
+              <CardDescription>
+                Téléchargez vos documents obligatoires pour valider votre participation au projet
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {(["kbis", "assurance_decennale", "assurance_rc", "rge"] as DocumentType[]).map((docType) => {
+                const document = getDocumentByType(docType);
+                const isUploading = uploadingDocument === docType;
+
+                return (
+                  <div key={docType} className="rounded-lg border border-gray-200 p-4">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <FileText className="h-5 w-5 text-gray-400" />
+                        <div>
+                          <h4 className="font-medium text-gray-900">{DOCUMENT_LABELS[docType]}</h4>
+                          {document?.rejection_reason && (
+                            <p className="text-xs text-red-600 mt-1">Rejeté: {document.rejection_reason}</p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {getDocumentStatusBadge(document)}
+                        {document && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            className="h-7 px-2"
+                          >
+                            <a href={document.file_url} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-3 w-3" />
+                            </a>
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+
+                    {(!document || document.status === "rejected") && (
+                      <div className="space-y-2">
+                        <input
+                          ref={(el) => { fileInputRefs.current[docType] = el; }}
+                          type="file"
+                          accept={DOC_ACCEPTED_EXTENSIONS}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              handleDocumentUpload(docType, file);
+                              e.target.value = "";
+                            }
+                          }}
+                          className="hidden"
+                        />
+                        <Button
+                          onClick={() => {
+                            fileInputRefs.current[docType]?.click();
+                          }}
+                          disabled={isUploading}
+                          variant="outline"
+                          size="sm"
+                          className="w-full border-dashed border-[#E8650A]/30 text-[#E8650A] hover:bg-[#E8650A]/5 hover:border-[#E8650A]/50"
+                        >
+                          {isUploading ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-2 border-[#E8650A] border-t-transparent mr-2" />
+                              Envoi en cours...
+                            </>
+                          ) : (
+                            <>
+                              <Upload className="h-3 w-3 mr-2" />
+                              {document ? "Remplacer" : "Télécharger"}
+                            </>
+                          )}
+                        </Button>
+                        <p className="text-xs text-gray-500 text-center">
+                          PDF, JPG ou PNG • 15 Mo maximum
+                        </p>
+                      </div>
+                    )}
+
+                    {document && document.status === "validated" && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                        <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                        <span>Validé le {new Date(document.validated_at || document.uploaded_at).toLocaleDateString()}</span>
+                      </div>
+                    )}
+
+                    {document && document.status === "pending" && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                        <Clock className="h-4 w-4 text-amber-600" />
+                        <span>En attente de validation</span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+
+              {documentErrors.length > 0 && (
+                <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                  {documentErrors.map((err, i) => (
+                    <div key={i} className="flex items-center gap-2 text-sm text-red-700">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>{err}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         )}
       </main>
 

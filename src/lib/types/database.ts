@@ -135,6 +135,7 @@ export interface ArtisanToken {
   project_id: string;
   task_id: string;
   artisan_name: string;
+  artisan_email: string | null;
   token: string;
   created_at: string;
 }

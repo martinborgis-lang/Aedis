@@ -20,7 +20,10 @@
       "Bash(npm uninstall @pascal-app/core @pascal-app/viewer @react-three/fiber @react-three/drei)",
       "Bash(git commit -m \"fix: replace Pascal npm packages with iframe approach\n\n- Removed @pascal-app/core, @pascal-app/viewer, @react-three/fiber, @react-three/drei packages\n- Deleted PascalViewerInner.tsx component  \n- Replaced PascalViewer with iframe-based approach using editor.pascal.app\n- Updated projects page to show Pascal Editor link instead of client-side rendering\n- Removed sceneData loading and processing logic from portal page\n- Kept three.js package for landing page 3D background\n- Build now passes with zero dependency conflicts\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
       "Bash(git commit -m \"fix: landing page CTA buttons\n\n- Fixed ''Voir la démo'' button to scroll smoothly to features section\n- ''Démarrer gratuitement'' already correctly links to /auth\n- ''Se connecter'' in navbar already correctly links to /auth\n- Improved user experience with smooth scroll demo navigation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
-      "Bash(git commit -m \"fix: demo button redirects to dashboard with demo data\n\n- Changed ''Voir la démo'' button from scroll to Link pointing to /dashboard\n- Dashboard shows pre-registered demo project data for proper demo experience\n- Visitors can now see actual Aedis interface with realistic data\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
+      "Bash(git commit -m \"fix: demo button redirects to dashboard with demo data\n\n- Changed ''Voir la démo'' button from scroll to Link pointing to /dashboard\n- Dashboard shows pre-registered demo project data for proper demo experience\n- Visitors can now see actual Aedis interface with realistic data\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(npm install recharts)",
+      "Bash(npm run dev)",
+      "Bash(git checkout HEAD -- src/app/dashboard/page.tsx)"
     ],
     "deny": [],
     "ask": []
