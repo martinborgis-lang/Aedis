@@ -29,7 +29,29 @@ const SORT_LABELS: Record<SortKey, string> = {
   status: "Statut",
 }
 
-function ProjectCard({ project, taskCount }: { project: Project; taskCount?: { total: number; completed: number } }) {
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 60) return `${m}m`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h`
+  return `${Math.floor(h / 24)}j`
+}
+
+function ProjectCard({ project, taskCount, lastActivity }: {
+  project: Project;
+  taskCount?: {
+    total: number;
+    completed: number;
+    overdue?: number;
+    reserves?: number;
+  };
+  lastActivity?: {
+    description: string;
+    created_at: string;
+    type: string;
+  };
+}) {
   const progress = taskCount && taskCount.total > 0
     ? Math.round((taskCount.completed / taskCount.total) * 100)
     : 0;
@@ -45,13 +67,22 @@ function ProjectCard({ project, taskCount }: { project: Project; taskCount?: { t
             <h3 className="font-medium text-gray-900">{project.name}</h3>
             <p className="text-sm text-gray-500 mt-0.5">{project.address}</p>
           </div>
-          <span className={`text-xs px-2 py-1 rounded-full ${
-            project.status === 'active'
-              ? 'bg-green-50 text-green-700'
-              : 'bg-gray-100 text-gray-500'
-          }`}>
-            {project.status === 'active' ? 'Actif' : project.status}
-          </span>
+          {project.status === 'active' ? (
+            <span className="flex items-center gap-1.5 text-xs px-2 py-1
+                           rounded-full bg-green-50 text-green-700">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full
+                               rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5
+                               bg-green-500"></span>
+              </span>
+              Actif
+            </span>
+          ) : (
+            <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-500">
+              {project.status}
+            </span>
+          )}
         </div>
 
         {/* Client */}
@@ -84,16 +115,20 @@ function ProjectCard({ project, taskCount }: { project: Project; taskCount?: { t
             <p className="text-xs text-gray-400">tâches</p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-orange-500">
-              0
+            <p className={`text-sm font-semibold ${
+              (taskCount?.reserves || 0) > 0 ? 'text-orange-500' : 'text-gray-800'
+            }`}>
+              {taskCount?.reserves || 0}
             </p>
             <p className="text-xs text-gray-400">réserves</p>
           </div>
           <div className="text-center">
-            <p className="text-sm font-semibold text-gray-800">
-              —
+            <p className={`text-sm font-semibold ${
+              (taskCount?.overdue || 0) > 0 ? 'text-red-500' : 'text-gray-800'
+            }`}>
+              {taskCount?.overdue || 0}
             </p>
-            <p className="text-xs text-gray-400">budget</p>
+            <p className="text-xs text-gray-400">retard</p>
           </div>
           {project.created_at && (
             <div className="text-center ml-auto">
@@ -106,6 +141,19 @@ function ProjectCard({ project, taskCount }: { project: Project; taskCount?: { t
             </div>
           )}
         </div>
+
+        {/* Recent activity */}
+        {lastActivity && (
+          <div className="mt-2 pt-2 border-t border-gray-50 flex items-center gap-2">
+            <span className="text-xs text-gray-400">Dernière activité :</span>
+            <span className="text-xs text-gray-500 truncate">
+              {lastActivity.description}
+            </span>
+            <span className="text-xs text-gray-300 shrink-0 ml-auto">
+              {timeAgo(lastActivity.created_at)}
+            </span>
+          </div>
+        )}
       </div>
     </Link>
   )
@@ -118,6 +166,7 @@ export default function DashboardPage() {
   const [search, setSearch] = useState("")
   const [sortBy, setSortBy] = useState<SortKey>("updated_at")
   const [taskCounts, setTaskCounts] = useState<Record<string, { total: number; completed: number }>>({})
+  const [recentActivities, setRecentActivities] = useState<Record<string, any>>({})
 
   useEffect(() => {
     async function loadData() {
@@ -126,29 +175,70 @@ export default function DashboardPage() {
       setUser(currentUser)
 
       if (currentUser) {
+        // Get all projects with related data
         const { data: projectsData } = await sb
           .from('projects')
-          .select('*')
+          .select(`
+            *,
+            tasks(id, status, progress, end_date),
+            reserves(id, status)
+          `)
           .eq('user_id', currentUser.id)
           .order('updated_at', { ascending: false })
 
         const loadedProjects = projectsData || []
         setProjects(loadedProjects)
 
+        // Calculate task counts and additional stats
         if (loadedProjects.length > 0) {
-          const { data: tasksData } = await sb
-            .from('tasks')
-            .select('project_id, status')
-            .in('project_id', loadedProjects.map(p => p.id))
+          const counts: Record<string, { total: number; completed: number; overdue: number; reserves: number }> = {}
+          const today = new Date().toISOString().split('T')[0]
 
-          if (tasksData) {
-            const counts: Record<string, { total: number; completed: number }> = {}
-            for (const t of tasksData) {
-              if (!counts[t.project_id]) counts[t.project_id] = { total: 0, completed: 0 }
-              counts[t.project_id].total++
-              if (t.status === 'completed') counts[t.project_id].completed++
+          for (const project of loadedProjects) {
+            const projectTasks = (project as any).tasks || []
+            const projectReserves = (project as any).reserves || []
+
+            counts[project.id] = {
+              total: projectTasks.length,
+              completed: projectTasks.filter((t: any) => t.status === 'completed').length,
+              overdue: projectTasks.filter((t: any) =>
+                t.end_date < today && t.status !== 'completed'
+              ).length,
+              reserves: projectReserves.filter((r: any) => r.status === 'open').length
             }
-            setTaskCounts(counts)
+          }
+
+          setTaskCounts(counts as any) // Cast to maintain compatibility
+
+          // Check if activity_feed table exists
+          const { data: activityCheck, error: activityError } = await sb
+            .from('activity_feed')
+            .select('*')
+            .limit(1)
+
+          console.log('activity_feed table check:', {
+            exists: !activityError,
+            error: activityError?.message,
+            sampleData: activityCheck
+          })
+
+          // Fetch last activity per project
+          if (!activityError && loadedProjects.length > 0) {
+            const { data: recentActivitiesData } = await sb
+              .from('activity_feed')
+              .select('project_id, description, created_at, type')
+              .in('project_id', loadedProjects.map(p => p.id))
+              .order('created_at', { ascending: false })
+
+            // Group by project_id, keep only the most recent per project
+            const lastActivityByProject = recentActivitiesData?.reduce((acc, activity) => {
+              if (!acc[activity.project_id]) {
+                acc[activity.project_id] = activity
+              }
+              return acc
+            }, {} as Record<string, any>)
+
+            setRecentActivities(lastActivityByProject || {})
           }
         }
       } else {
@@ -205,8 +295,8 @@ export default function DashboardPage() {
     const completed = projects.filter(p => p.status === "completed").length
     const totalTasks = Object.values(taskCounts).reduce((s, c) => s + c.total, 0)
     const completedTasks = Object.values(taskCounts).reduce((s, c) => s + c.completed, 0)
-    const overdueCount = 3 // Mock data for overdue tasks
-    const reservesCount = 2 // Mock data for open reserves
+    const overdueCount = Object.values(taskCounts).reduce((s, c) => s + ((c as any).overdue || 0), 0)
+    const reservesCount = Object.values(taskCounts).reduce((s, c) => s + ((c as any).reserves || 0), 0)
     return { activeCount, completed, totalTasks, completedTasks, overdueCount, reservesCount }
   }, [projects, taskCounts])
 
@@ -245,7 +335,6 @@ export default function DashboardPage() {
         <div className="flex gap-4 mb-8 flex-wrap">
           {[
             { label: 'Projets', value: projects.length, icon: '📁' },
-            { label: 'Actifs', value: stats.activeCount, icon: '🟢' },
             { label: 'Tâches terminées', value: stats.completedTasks, icon: '✓' },
             { label: 'Tâches totales', value: stats.totalTasks, icon: '📋' },
             { label: 'En retard', value: stats.overdueCount, icon: '⚠', alert: stats.overdueCount > 0 },
@@ -261,6 +350,20 @@ export default function DashboardPage() {
               <span className="text-gray-500">{stat.label}</span>
             </div>
           ))}
+
+          {/* Special active projects stat with animated dot */}
+          <div className="flex items-center gap-2 px-4 py-2 rounded-lg border text-sm border-gray-100 bg-white">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full
+                             rounded-full bg-green-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5
+                             bg-green-500"></span>
+            </span>
+            <span className="font-semibold text-gray-800">
+              {stats.activeCount}
+            </span>
+            <span className="text-gray-500">Actifs</span>
+          </div>
         </div>
 
         {/* Main content — 2 columns */}
@@ -340,6 +443,7 @@ export default function DashboardPage() {
                     key={project.id}
                     project={project}
                     taskCount={taskCounts[project.id]}
+                    lastActivity={recentActivities[project.id]}
                   />
                 ))}
               </div>

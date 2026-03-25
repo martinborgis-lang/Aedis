@@ -866,69 +866,76 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const [tempBudgetValues, setTempBudgetValues] = useState<Record<string, { budget_prevu?: number; budget_depense?: number }>>({});
+  const [editValues, setEditValues] = useState<Record<string, {prevu?: number, depense?: number}>>({});
   const [savingBudget, setSavingBudget] = useState<string | null>(null);
-
-  const updateTaskBudget = async (taskId: string, field: 'budget_prevu' | 'budget_depense', value: number) => {
-    if (isDemo) return;
-
-    try {
-      const { error } = await supabase
-        .from("tasks")
-        .update({ [field]: value })
-        .eq("id", taskId);
-
-      if (error) throw error;
-
-      // Update local state
-      setTasks(tasks.map(t => t.id === taskId ? { ...t, [field]: value } : t));
-
-      // Log to budget_history if exists
-      const task = tasks.find(t => t.id === taskId);
-      if (task) {
-        try {
-          await supabase.from('budget_history').insert({
-            project_id: projectId,
-            task_id: taskId,
-            type: field === 'budget_prevu' ? 'prevu' : 'depense',
-            amount_before: (task as any)[field] || 0,
-            amount_after: value,
-            created_by: null
-          });
-        } catch (historyError) {
-          // Silent fail if table doesn't exist
-        }
-      }
-    } catch (error) {
-      console.error("Error updating budget:", error);
-    }
-  };
 
   const handleSaveBudget = async (taskId: string) => {
     setSavingBudget(taskId);
-    const temp = tempBudgetValues[taskId];
-    if (!temp) {
+    const values = editValues[taskId];
+    if (!values) {
       setSavingBudget(null);
       setEditingBudget(null);
       return;
     }
 
     try {
-      if (temp.budget_prevu !== undefined) {
-        await updateTaskBudget(taskId, 'budget_prevu', temp.budget_prevu);
-      }
-      if (temp.budget_depense !== undefined) {
-        await updateTaskBudget(taskId, 'budget_depense', temp.budget_depense);
+      // Update both fields at once
+      const { error } = await supabase
+        .from('tasks')
+        .update({
+          budget_prevu: values.prevu,
+          budget_depense: values.depense
+        })
+        .eq('id', taskId);
+
+      if (error) throw error;
+
+      // Update local state
+      setTasks(prev => prev.map(t =>
+        t.id === taskId
+          ? { ...t, budget_prevu: values.prevu, budget_depense: values.depense }
+          : t
+      ));
+
+      // Log to budget_history for both changes if they differ
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        const originalPrevu = (task as any).budget_prevu || 0;
+        const originalDepense = (task as any).budget_depense || 0;
+
+        try {
+          if (values.prevu !== originalPrevu) {
+            await supabase.from('budget_history').insert({
+              project_id: projectId,
+              task_id: taskId,
+              type: 'prevu',
+              amount_before: originalPrevu,
+              amount_after: values.prevu || 0,
+              created_by: null
+            });
+          }
+          if (values.depense !== originalDepense) {
+            await supabase.from('budget_history').insert({
+              project_id: projectId,
+              task_id: taskId,
+              type: 'depense',
+              amount_before: originalDepense,
+              amount_after: values.depense || 0,
+              created_by: null
+            });
+          }
+        } catch (historyError) {
+          // Silent fail if table doesn't exist
+        }
       }
 
-      // Clear temp values
-      setTempBudgetValues(prev => {
-        const newState = { ...prev };
-        delete newState[taskId];
-        return newState;
-      });
-
+      // Clear edit state
       setEditingBudget(null);
+      setEditValues(prev => {
+        const next = { ...prev };
+        delete next[taskId];
+        return next;
+      });
     } catch (error) {
       console.error("Error saving budget:", error);
     } finally {
@@ -937,22 +944,12 @@ export default function ProjectDetailPage() {
   };
 
   const handleCancelBudget = (taskId: string) => {
-    setTempBudgetValues(prev => {
-      const newState = { ...prev };
-      delete newState[taskId];
-      return newState;
-    });
     setEditingBudget(null);
-  };
-
-  const updateTempBudget = (taskId: string, field: 'budget_prevu' | 'budget_depense', value: number) => {
-    setTempBudgetValues(prev => ({
-      ...prev,
-      [taskId]: {
-        ...prev[taskId],
-        [field]: value
-      }
-    }));
+    setEditValues(prev => {
+      const next = { ...prev };
+      delete next[taskId];
+      return next;
+    });
   };
 
   if (loading) {
@@ -1813,14 +1810,16 @@ export default function ProjectDetailPage() {
                                 <div className="flex items-center gap-2">
                                   <input
                                     type="number"
-                                    defaultValue={budgetPrevu}
+                                    value={editValues[task.id]?.prevu ?? budgetPrevu}
+                                    onChange={e => setEditValues(prev => ({
+                                      ...prev,
+                                      [task.id]: {
+                                        ...prev[task.id],
+                                        prevu: parseFloat(e.target.value) || 0
+                                      }
+                                    }))}
                                     className="w-24 border border-gray-200 rounded px-2 py-1 text-sm text-right"
-                                    style={{
-                                      MozAppearance: 'textfield',
-                                      WebkitAppearance: 'none'
-                                    }}
-                                    id={`budget-prevu-${task.id}`}
-                                    onChange={(e) => updateTempBudget(task.id, 'budget_prevu', parseFloat(e.target.value) || 0)}
+                                    style={{ MozAppearance: 'textfield' }}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') handleSaveBudget(task.id);
                                       if (e.key === 'Escape') handleCancelBudget(task.id);
@@ -1837,14 +1836,16 @@ export default function ProjectDetailPage() {
                                 <div className="flex items-center gap-2">
                                   <input
                                     type="number"
-                                    defaultValue={budgetDepense}
+                                    value={editValues[task.id]?.depense ?? budgetDepense}
+                                    onChange={e => setEditValues(prev => ({
+                                      ...prev,
+                                      [task.id]: {
+                                        ...prev[task.id],
+                                        depense: parseFloat(e.target.value) || 0
+                                      }
+                                    }))}
                                     className="w-24 border border-gray-200 rounded px-2 py-1 text-sm text-right"
-                                    style={{
-                                      MozAppearance: 'textfield',
-                                      WebkitAppearance: 'none'
-                                    }}
-                                    id={`budget-depense-${task.id}`}
-                                    onChange={(e) => updateTempBudget(task.id, 'budget_depense', parseFloat(e.target.value) || 0)}
+                                    style={{ MozAppearance: 'textfield' }}
                                     onKeyDown={(e) => {
                                       if (e.key === 'Enter') handleSaveBudget(task.id);
                                       if (e.key === 'Escape') handleCancelBudget(task.id);
@@ -1887,12 +1888,12 @@ export default function ProjectDetailPage() {
                                     <button
                                       onClick={() => {
                                         setEditingBudget(task.id);
-                                        // Initialize temp values with current values
-                                        setTempBudgetValues(prev => ({
+                                        // Initialize edit values with current values
+                                        setEditValues(prev => ({
                                           ...prev,
                                           [task.id]: {
-                                            budget_prevu: budgetPrevu,
-                                            budget_depense: budgetDepense
+                                            prevu: budgetPrevu,
+                                            depense: budgetDepense
                                           }
                                         }));
                                       }}

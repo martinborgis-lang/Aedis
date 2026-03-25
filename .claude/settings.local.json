@@ -1,8 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Bash(git add -A)",
-      "Bash(git commit -m \"fix: correct TypeScript syntax for activity feed logging\n\n• Fixed .then().catch() syntax issue with Supabase inserts\n• Updated to proper try/catch blocks with await for activity logging\n• Ensures proper error handling without TypeScript conflicts\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
+      "Bash(git commit -m \"fix: TypeScript compilation errors + successful local build\n\nFixed multiple TypeScript errors preventing build deployment:\n• Replaced undefined ''user'' variable with null in budget history logging\n• Fixed Supabase query syntax: replaced .catch() with try/catch blocks  \n• Updated activity feed logging in ReservesList.tsx with proper error handling\n• Verified local build now compiles successfully without errors\n\nAll 4 UI fixes now working with clean TypeScript compilation:\n✓ Budget inline editing with save/cancel buttons\n✓ Thinner budget chart bars (barSize={20})\n✓ Dashboard 2-column redesign (Projects + Activity feed)\n✓ Activity feed database integration\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
     ],
     "deny": [],
     "ask": []

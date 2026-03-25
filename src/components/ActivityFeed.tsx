@@ -29,17 +29,35 @@ function timeAgo(dateStr: string): string {
 
 export default function ActivityFeed({ projectIds }: { projectIds: string[] }) {
   const [activities, setActivities] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
-    if (!projectIds.length) return
-    supabase
-      .from('activity_feed')
-      .select('*')
-      .in('project_id', projectIds)
-      .order('created_at', { ascending: false })
-      .limit(15)
-      .then(({ data }) => setActivities(data || []))
+    if (!projectIds.length) {
+      setLoading(false)
+      return
+    }
+
+    setLoading(true)
+
+    async function fetchActivities() {
+      try {
+        const { data } = await supabase
+          .from('activity_feed')
+          .select('*')
+          .in('project_id', projectIds)
+          .order('created_at', { ascending: false })
+          .limit(15)
+
+        setActivities(data || [])
+      } catch (error) {
+        console.error('Error fetching activities:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchActivities()
   }, [projectIds.join(','), supabase])
 
   return (
@@ -48,25 +66,34 @@ export default function ActivityFeed({ projectIds }: { projectIds: string[] }) {
         Activité récente
       </h3>
       <div className="space-y-4">
-        {activities.map(a => (
-          <div key={a.id} className="flex gap-3 items-start">
-            <span className={`text-sm mt-0.5 ${COLORS[a.type] || 'text-gray-400'}`}>
-              {ICONS[a.type] || '•'}
-            </span>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm text-gray-800 leading-snug">{a.description}</p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="text-xs text-gray-400 truncate">{a.project_name}</span>
-                <span className="text-xs text-gray-300">·</span>
-                <span className="text-xs text-gray-400 shrink-0">{timeAgo(a.created_at)}</span>
+        {loading ? (
+          <div className="space-y-3">
+            {[1,2,3].map(i => (
+              <div key={i} className="h-12 bg-gray-100 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : activities.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-8">
+            Aucune activité récente.<br/>
+            <span className="text-xs">Les actions des artisans et
+            modifications de tâches apparaîtront ici.</span>
+          </p>
+        ) : (
+          activities.map(a => (
+            <div key={a.id} className="flex gap-3 items-start">
+              <span className={`text-sm mt-0.5 ${COLORS[a.type] || 'text-gray-400'}`}>
+                {ICONS[a.type] || '•'}
+              </span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-gray-800 leading-snug">{a.description}</p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="text-xs text-gray-400 truncate">{a.project_name}</span>
+                  <span className="text-xs text-gray-300">·</span>
+                  <span className="text-xs text-gray-400 shrink-0">{timeAgo(a.created_at)}</span>
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-        {activities.length === 0 && (
-          <p className="text-sm text-gray-400 text-center py-6">
-            Aucune activité récente
-          </p>
+          ))
         )}
       </div>
     </div>
