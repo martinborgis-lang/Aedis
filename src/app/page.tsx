@@ -38,15 +38,32 @@ export default function Home() {
       {/* Fixed Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-syne text-xl text-foreground">Aedis</div>
+          <div className="font-syne text-xl" style={{ color: 'rgba(255,255,255,0.85)' }}>Aedis</div>
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Fonctionnalités</a>
-            <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">Comment ça marche</a>
-            <a href="#roles" className="text-muted-foreground hover:text-foreground transition-colors">Rôles</a>
+            <a href="#features" style={{ color: 'rgba(255,255,255,0.55)' }} className="hover:text-foreground transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.55)'}>Fonctionnalités</a>
+            <a href="#how-it-works" style={{ color: 'rgba(255,255,255,0.55)' }} className="hover:text-foreground transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.55)'}>Comment ça marche</a>
+            <a href="#roles" style={{ color: 'rgba(255,255,255,0.55)' }} className="hover:text-foreground transition-colors" onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.9)'} onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255,255,255,0.55)'}>Rôles</a>
           </div>
           <Link
             href="/auth"
-            className="bg-[rgba(255,122,61,0.15)] border border-[rgba(255,122,61,0.3)] text-[#FF7A3D] hover:bg-[rgba(255,122,61,0.25)] px-[18px] py-2 rounded-md text-[13px] font-medium transition-colors"
+            style={{
+              background: 'rgba(255,122,61,0.12)',
+              border: '1px solid rgba(255,122,61,0.25)',
+              color: 'rgba(255,122,61,0.8)',
+              padding: '7px 16px',
+              fontSize: '12px',
+              borderRadius: '6px',
+              transition: 'all 0.2s',
+              textDecoration: 'none'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,122,61,0.2)';
+              e.currentTarget.style.color = 'rgba(255,122,61,1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,122,61,0.12)';
+              e.currentTarget.style.color = 'rgba(255,122,61,0.8)';
+            }}
           >
             Essai gratuit
           </Link>
@@ -77,86 +94,99 @@ export default function Home() {
           background: 'radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,5,16,0.75) 100%)'
         }} />
 
-        {/* Hero content on top */}
+        {/* Hero content bottom-left */}
         <div style={{
-          position: 'relative',
+          position: 'absolute',
+          bottom: '10%',
+          left: '5%',
           zIndex: 2,
-          textAlign: 'center',
-          padding: '0 24px',
-          maxWidth: '700px'
+          textAlign: 'left',
+          maxWidth: '480px',
+          padding: '0'
         }}>
-          <div
-            className="inline-flex items-center gap-2 rounded-full mb-8"
-            style={{
-              background: 'rgba(255,122,61,0.08)',
-              border: '1px solid rgba(255,122,61,0.2)',
-              color: '#FF7A3D',
-              padding: '5px 14px',
-              fontSize: '11px',
-              fontWeight: '500',
-              letterSpacing: '0.1em',
-              textTransform: 'uppercase'
-            }}
-          >
-            <span>Suivi de chantier nouvelle génération</span>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '6px',
+            background: 'rgba(255,122,61,0.07)',
+            border: '1px solid rgba(255,122,61,0.18)',
+            color: 'rgba(255,122,61,0.7)',
+            padding: '4px 12px',
+            borderRadius: '100px',
+            fontSize: '10px',
+            fontWeight: '500',
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            marginBottom: '16px',
+            opacity: 0.8
+          }}>
+            <span style={{
+              width: '5px',
+              height: '5px',
+              borderRadius: '50%',
+              background: 'rgba(255,122,61,0.8)',
+              display: 'inline-block'
+            }} />
+            Suivi de chantier nouvelle génération
           </div>
 
-          <h1
-            className="hero-title leading-none mb-6"
-            style={{
-              fontFamily: 'var(--font-syne)',
-              fontSize: 'clamp(28px, 4vw, 52px)',
-              fontWeight: '700',
-              lineHeight: '1.0',
-              letterSpacing: '-0.03em',
-              color: 'white',
-              maxWidth: '860px',
-              marginBottom: '24px'
-            }}
-          >
+          <h1 style={{
+            fontSize: 'clamp(24px, 3vw, 40px)',
+            fontWeight: '600',
+            lineHeight: '1.1',
+            letterSpacing: '-0.02em',
+            color: 'rgba(255,255,255,0.82)',
+            marginBottom: '12px',
+            fontFamily: 'var(--font-syne)'
+          }}>
             Gérez vos chantiers.<br/>
-            <em style={{ fontStyle: 'normal', color: '#FF7A3D' }}>
+            <em style={{ fontStyle: 'normal', color: 'rgba(255,122,61,0.75)' }}>
               Votre réputation suit.
             </em>
           </h1>
 
-          <p
-            className="max-w-2xl mx-auto mb-11"
-            style={{
-              fontSize: 'clamp(15px, 1.8vw, 18px)',
-              color: 'rgba(255,255,255,0.55)',
-              maxWidth: '520px',
-              lineHeight: '1.7',
-              marginBottom: '44px',
-              fontWeight: '300',
-              letterSpacing: '0.01em'
-            }}
-          >
-            La plateforme collaborative qui connecte architectes, artisans et clients autour d&apos;un seul outil.
+          <p style={{
+            fontSize: '13px',
+            color: 'rgba(255,255,255,0.38)',
+            lineHeight: '1.6',
+            marginBottom: '24px',
+            fontWeight: '300',
+            maxWidth: '360px'
+          }}>
+            La plateforme collaborative qui connecte architectes, artisans et clients autour d'un seul outil.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            flexWrap: 'wrap'
+          }}>
             <Link
               href="/auth"
-              className="inline-flex items-center gap-2 transition-all"
+              className="inline-flex items-center gap-2"
               style={{
-                background: 'linear-gradient(135deg, #FF7A3D 0%, #E8650A 100%)',
-                border: 'none',
-                padding: '8px 16px',
+                background: 'rgba(255,122,61,0.7)',
+                border: '1px solid rgba(255,122,61,0.4)',
+                color: 'rgba(255,255,255,0.9)',
+                padding: '9px 20px',
                 fontSize: '12px',
                 fontWeight: '500',
                 borderRadius: '6px',
                 letterSpacing: '0.02em',
-                boxShadow: '0 0 15px rgba(255,122,61,0.2)',
-                color: 'white'
+                backdropFilter: 'blur(8px)',
+                cursor: 'pointer',
+                transition: 'background 0.2s, opacity 0.2s',
+                textDecoration: 'none',
+                display: 'inline-block'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 25px rgba(255,122,61,0.35)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.background = 'rgba(255,122,61,0.9)';
+                e.currentTarget.style.opacity = '1';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 15px rgba(255,122,61,0.2)';
-                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.background = 'rgba(255,122,61,0.7)';
+                e.currentTarget.style.opacity = '1';
               }}
             >
               Démarrer gratuitement
@@ -164,29 +194,53 @@ export default function Home() {
             </Link>
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-2 transition-all"
+              className="inline-flex items-center gap-2"
               style={{
-                background: 'transparent',
-                border: '1px solid rgba(255,255,255,0.15)',
-                padding: '8px 14px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                color: 'rgba(255,255,255,0.5)',
+                padding: '9px 18px',
                 fontSize: '12px',
-                color: 'rgba(255,255,255,0.8)',
+                fontWeight: '400',
                 borderRadius: '6px',
-                backdropFilter: 'blur(8px)'
+                backdropFilter: 'blur(8px)',
+                cursor: 'pointer',
+                transition: 'all 0.2s',
+                textDecoration: 'none',
+                display: 'inline-block'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,122,61,0.4)';
-                e.currentTarget.style.color = 'white';
+                e.currentTarget.style.borderColor = 'rgba(255,122,61,0.3)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
-                e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
               }}
             >
               <Play className="w-3 h-3" />
               Voir la démo
             </Link>
           </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <div style={{
+          position: 'absolute',
+          bottom: '32px',
+          right: '5%',
+          zIndex: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '6px',
+          opacity: 0.25
+        }}>
+          <div style={{
+            width: '1px',
+            height: '40px',
+            background: 'linear-gradient(to bottom, rgba(255,255,255,0.8), transparent)'
+          }} />
         </div>
 
         {/* Bottom fade inside hero */}
