@@ -1,18 +1,17 @@
 import type { Metadata } from "next";
-import { DM_Serif_Display, DM_Sans } from "next/font/google";
+import { Syne, Inter } from "next/font/google";
 import "./globals.css";
 
-const dmSerifDisplay = DM_Serif_Display({
-  subsets: ["latin"],
-  variable: "--font-dm-serif",
-  weight: ["400"],
-  style: ["normal", "italic"],
+const syne = Syne({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700', '800'],
+  variable: '--font-syne'
 });
 
-const dmSans = DM_Sans({
-  subsets: ["latin"],
-  variable: "--font-dm-sans",
-  weight: ["400", "500", "600", "700"],
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['300', '400', '500'],
+  variable: '--font-inter'
 });
 
 export const metadata: Metadata = {
@@ -27,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${dmSerifDisplay.variable} ${dmSans.variable} font-dm-sans antialiased`}>
+      <body className={`${syne.variable} ${inter.variable} antialiased`}>
         {children}
       </body>
     </html>

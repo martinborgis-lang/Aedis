@@ -37,7 +37,7 @@ export default function Home() {
       {/* Fixed Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
-          <div className="font-dm-serif text-xl text-foreground">Aedis</div>
+          <div className="font-syne text-xl text-foreground">Aedis</div>
           <div className="hidden md:flex items-center space-x-8">
             <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">Fonctionnalités</a>
             <a href="#how-it-works" className="text-muted-foreground hover:text-foreground transition-colors">Comment ça marche</a>
@@ -45,46 +45,123 @@ export default function Home() {
           </div>
           <Link
             href="/auth"
-            className="bg-accent hover:bg-accent/90 text-accent-foreground px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+            className="bg-[rgba(255,122,61,0.15)] border border-[rgba(255,122,61,0.3)] text-[#FF7A3D] hover:bg-[rgba(255,122,61,0.25)] px-[18px] py-2 rounded-md text-[13px] font-medium transition-colors"
           >
-            Se connecter
+            Essai gratuit
           </Link>
         </div>
       </nav>
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* 3D Background Container */}
+        {/* Blueprint Animation Background */}
         <div className="absolute inset-0 z-0">
-          <ThreeJSBackground />
+          <iframe
+            src="/blueprint-animation.html"
+            className="w-full h-full border-none"
+            style={{ background: '#0A0B0D' }}
+          />
         </div>
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
-          <div className="inline-flex items-center bg-card border border-border rounded-full px-4 py-2 mb-8">
-            <span className="text-sm text-muted-foreground">Suivi de chantier nouvelle génération</span>
+          <div
+            className="inline-flex items-center gap-2 rounded-full mb-8"
+            style={{
+              background: 'rgba(255,122,61,0.08)',
+              border: '1px solid rgba(255,122,61,0.2)',
+              color: '#FF7A3D',
+              padding: '5px 14px',
+              fontSize: '11px',
+              fontWeight: '500',
+              letterSpacing: '0.1em',
+              textTransform: 'uppercase'
+            }}
+          >
+            <span>Suivi de chantier nouvelle génération</span>
           </div>
 
-          <h1 className="text-5xl md:text-7xl font-dm-serif leading-tight mb-6">
-            Gérez vos chantiers.{" "}
-            <span className="italic text-accent">Votre réputation suit.</span>
+          <h1
+            className="hero-title leading-none mb-6"
+            style={{
+              fontFamily: 'var(--font-syne)',
+              fontSize: 'clamp(44px, 6.5vw, 88px)',
+              fontWeight: '700',
+              lineHeight: '1.0',
+              letterSpacing: '-0.03em',
+              color: 'white',
+              maxWidth: '860px',
+              marginBottom: '24px'
+            }}
+          >
+            Gérez vos chantiers.<br/>
+            <em style={{ fontStyle: 'normal', color: '#FF7A3D' }}>
+              Votre réputation suit.
+            </em>
           </h1>
 
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+          <p
+            className="max-w-2xl mx-auto mb-11"
+            style={{
+              fontSize: 'clamp(15px, 1.8vw, 18px)',
+              color: 'rgba(255,255,255,0.55)',
+              maxWidth: '520px',
+              lineHeight: '1.7',
+              marginBottom: '44px',
+              fontWeight: '300',
+              letterSpacing: '0.01em'
+            }}
+          >
             La plateforme collaborative qui connecte architectes, artisans et clients autour d&apos;un seul outil.
           </p>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href="/auth"
-              className="bg-accent hover:bg-accent/90 text-accent-foreground px-8 py-4 rounded-lg font-medium inline-flex items-center gap-2 transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 transition-all"
+              style={{
+                background: 'linear-gradient(135deg, #FF7A3D 0%, #E8650A 100%)',
+                border: 'none',
+                padding: '12px 28px',
+                fontSize: '14px',
+                fontWeight: '500',
+                borderRadius: '8px',
+                letterSpacing: '0.02em',
+                boxShadow: '0 0 20px rgba(255,122,61,0.25)',
+                color: 'white'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 35px rgba(255,122,61,0.45)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,122,61,0.25)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
             >
               Démarrer gratuitement
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/dashboard"
-              className="border border-border hover:bg-card text-foreground px-8 py-4 rounded-lg font-medium inline-flex items-center gap-2 transition-colors"
+              className="inline-flex items-center gap-2 transition-all"
+              style={{
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.15)',
+                padding: '12px 22px',
+                fontSize: '14px',
+                color: 'rgba(255,255,255,0.8)',
+                borderRadius: '8px',
+                backdropFilter: 'blur(8px)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,122,61,0.4)';
+                e.currentTarget.style.color = 'white';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = 'rgba(255,255,255,0.15)';
+                e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+              }}
             >
               <Play className="w-4 h-4" />
               Voir la démo
@@ -94,24 +171,96 @@ export default function Home() {
       </section>
 
       {/* Stats Bar */}
-      <section className="border-y border-border bg-card/50">
+      <section
+        className="border-y"
+        style={{
+          background: 'rgba(0,0,0,0.4)',
+          backdropFilter: 'blur(12px)',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)'
+        }}
+      >
         <div className="max-w-6xl mx-auto px-6 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-2xl font-bold text-accent mb-1">5h</div>
-              <div className="text-sm text-muted-foreground">gagnées par semaine</div>
+              <div
+                className="mb-1 text-white"
+                style={{
+                  fontFamily: 'var(--font-syne)',
+                  fontSize: '32px'
+                }}
+              >
+                5h
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.4)',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                gagnées par semaine
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-accent mb-1">3</div>
-              <div className="text-sm text-muted-foreground">rôles connectés</div>
+              <div
+                className="mb-1 text-white"
+                style={{
+                  fontFamily: 'var(--font-syne)',
+                  fontSize: '32px'
+                }}
+              >
+                3
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.4)',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                rôles connectés
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-accent mb-1">0€</div>
-              <div className="text-sm text-muted-foreground">pour les artisans</div>
+              <div
+                className="mb-1 text-white"
+                style={{
+                  fontFamily: 'var(--font-syne)',
+                  fontSize: '32px'
+                }}
+              >
+                0€
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.4)',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                pour les artisans
+              </div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-accent mb-1">118Md€</div>
-              <div className="text-sm text-muted-foreground">marché rénovation France</div>
+              <div
+                className="mb-1 text-white"
+                style={{
+                  fontFamily: 'var(--font-syne)',
+                  fontSize: '32px'
+                }}
+              >
+                118Md€
+              </div>
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: 'rgba(255,255,255,0.4)',
+                  letterSpacing: '0.05em'
+                }}
+              >
+                marché rénovation France
+              </div>
             </div>
           </div>
         </div>
@@ -121,7 +270,7 @@ export default function Home() {
       <section id="features" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-dm-serif mb-6">
+            <h2 className="text-3xl md:text-5xl font-syne mb-6">
               Tout ce dont vous avez besoin pour{" "}
               <span className="italic text-accent">réussir</span>
             </h2>
@@ -135,38 +284,113 @@ export default function Home() {
               {
                 title: "Planning intelligent",
                 description: "Lots, dépendances, alertes auto",
-                icon: "📊"
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <rect x="3" y="4" width="18" height="16" rx="2"/>
+                    <path d="M8 2v4M16 2v4M3 10h18M8 14h.01M12 14h.01M16 14h.01"/>
+                  </svg>
+                )
               },
               {
                 title: "Portail client temps réel",
                 description: "Lien unique sans compte",
-                icon: "🔗"
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 1v3M12 20v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M1 12h3M20 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+                  </svg>
+                )
               },
               {
                 title: "Réputation vérifiée",
                 description: "Portfolio auto-généré",
-                icon: "⭐"
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                )
               },
               {
                 title: "Communication structurée",
                 description: "Messagerie par tâche",
-                icon: "💬"
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                )
               },
               {
                 title: "Rapports PDF auto",
                 description: "Compte-rendu en un clic",
-                icon: "📄"
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <path d="M14 2v6h6M9 13l2 2 4-4"/>
+                  </svg>
+                )
               },
               {
                 title: "Gestion des réserves",
                 description: "Suivi levée de réserve",
-                icon: "✅"
+                icon: (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M12 8v4M12 16h.01"/>
+                  </svg>
+                )
               }
             ].map((feature, index) => (
-              <div key={index} className="bg-card border border-border rounded-xl p-8 hover:border-accent/50 transition-colors">
-                <div className="text-3xl mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-muted-foreground">{feature.description}</p>
+              <div
+                key={index}
+                className="transition-all hover:border-[rgba(255,122,61,0.2)]"
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.07)',
+                  borderRadius: '0',
+                  padding: '40px 36px'
+                }}
+              >
+                <div
+                  className="mb-4"
+                  style={{
+                    width: '36px',
+                    height: '36px',
+                    borderRadius: '8px',
+                    background: 'rgba(255,122,61,0.1)',
+                    border: '1px solid rgba(255,122,61,0.2)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#FF7A3D'
+                  }}
+                >
+                  {feature.icon}
+                </div>
+                <h3
+                  className="mb-3"
+                  style={{
+                    fontFamily: 'var(--font-syne)',
+                    fontSize: '18px',
+                    fontWeight: '600'
+                  }}
+                >
+                  {feature.title}
+                </h3>
+                <p
+                  style={{
+                    fontSize: '14px',
+                    color: 'rgba(255,255,255,0.5)',
+                    lineHeight: '1.7'
+                  }}
+                >
+                  {feature.description}
+                </p>
               </div>
             ))}
           </div>
@@ -178,7 +402,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
-              <h2 className="text-3xl md:text-5xl font-dm-serif">
+              <h2 className="text-3xl md:text-5xl font-syne">
                 Comment ça <span className="italic text-accent">marche</span>
               </h2>
 
@@ -205,7 +429,7 @@ export default function Home() {
                 }
               ].map((item, index) => (
                 <div key={index} className="flex gap-6">
-                  <div className="text-accent font-dm-serif text-lg font-bold">Step {item.step}</div>
+                  <div className="text-accent font-syne text-lg font-bold">{item.step}</div>
                   <div>
                     <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
                     <p className="text-muted-foreground">{item.description}</p>
@@ -228,7 +452,7 @@ export default function Home() {
       <section id="roles" className="py-20">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-dm-serif mb-6">
+            <h2 className="text-3xl md:text-5xl font-syne mb-6">
               Trois rôles, <span className="italic text-accent">une vision</span>
             </h2>
           </div>
@@ -276,7 +500,7 @@ export default function Home() {
       {/* Email Capture */}
       <section className="py-20 bg-card/30">
         <div className="max-w-3xl mx-auto px-6 text-center">
-          <h2 className="text-3xl md:text-5xl font-dm-serif mb-6">
+          <h2 className="text-3xl md:text-5xl font-syne mb-6">
             Votre prochain chantier mérite mieux que <span className="italic text-accent">WhatsApp</span>
           </h2>
 
@@ -320,170 +544,5 @@ export default function Home() {
         </div>
       </footer>
     </div>
-  );
-}
-
-// Three.js Background Component
-function ThreeJSBackground() {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-
-    if (typeof window === "undefined") return;
-
-    // Only load on desktop to avoid mobile performance issues
-    if (window.innerWidth < 768) return;
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let scene: any, camera: any, renderer: any; // eslint-disable-line @typescript-eslint/no-explicit-any
-    const buildings: any[] = []; // eslint-disable-line @typescript-eslint/no-explicit-any
-    let animationId: number;
-
-    const init = async () => {
-      try {
-        // Dynamic import of Three.js
-        const THREE = await import("three");
-
-        // Scene setup
-        scene = new THREE.Scene();
-        camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-        renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0x000000, 0);
-
-        const container = document.getElementById("threejs-container");
-        if (container) {
-          container.appendChild(renderer.domElement);
-        }
-
-        // Grid floor
-        const gridHelper = new THREE.GridHelper(100, 50, 0xE8650A, 0x333333);
-        gridHelper.material.opacity = 0.3;
-        gridHelper.material.transparent = true;
-        scene.add(gridHelper);
-
-        // Create buildings
-        for (let i = 0; i < 20; i++) {
-          const height = Math.random() * 10 + 2;
-          const geometry = new THREE.BoxGeometry(
-            Math.random() * 2 + 0.5,
-            height,
-            Math.random() * 2 + 0.5
-          );
-
-          const material = new THREE.MeshBasicMaterial({
-            color: Math.random() < 0.3 ? 0xE8650A : 0x333333,
-            wireframe: true,
-            transparent: true,
-            opacity: 0.6
-          });
-
-          const building = new THREE.Mesh(geometry, material);
-          building.position.x = (Math.random() - 0.5) * 40;
-          building.position.z = (Math.random() - 0.5) * 40;
-          building.position.y = height / 2;
-
-          buildings.push(building);
-          scene.add(building);
-        }
-
-        // Floating particles
-        const particleCount = 100;
-        const positions = new Float32Array(particleCount * 3);
-
-        for (let i = 0; i < particleCount * 3; i += 3) {
-          positions[i] = (Math.random() - 0.5) * 100;
-          positions[i + 1] = Math.random() * 50;
-          positions[i + 2] = (Math.random() - 0.5) * 100;
-        }
-
-        const particleGeometry = new THREE.BufferGeometry();
-        particleGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-
-        const particleMaterial = new THREE.PointsMaterial({
-          color: 0xE8650A,
-          size: 0.5,
-          transparent: true,
-          opacity: 0.8
-        });
-
-        const particles = new THREE.Points(particleGeometry, particleMaterial);
-        scene.add(particles);
-
-        // Camera position
-        camera.position.set(15, 8, 15);
-        camera.lookAt(0, 0, 0);
-
-        // Animation loop
-        const animate = () => {
-          animationId = requestAnimationFrame(animate);
-
-          // Rotate camera slowly
-          const time = Date.now() * 0.0005;
-          camera.position.x = Math.cos(time) * 15;
-          camera.position.z = Math.sin(time) * 15;
-          camera.lookAt(0, 0, 0);
-
-          // Animate buildings growing
-          buildings.forEach((building, index) => {
-            const scale = Math.sin(time + index * 0.5) * 0.1 + 1;
-            building.scale.y = scale;
-          });
-
-          // Animate particles
-          const positions = particles.geometry.attributes.position.array as Float32Array;
-          for (let i = 1; i < positions.length; i += 3) {
-            positions[i] += 0.02;
-            if (positions[i] > 50) positions[i] = 0;
-          }
-          particles.geometry.attributes.position.needsUpdate = true;
-
-          renderer.render(scene, camera);
-        };
-
-        animate();
-
-        // Handle resize
-        const handleResize = () => {
-          camera.aspect = window.innerWidth / window.innerHeight;
-          camera.updateProjectionMatrix();
-          renderer.setSize(window.innerWidth, window.innerHeight);
-        };
-
-        window.addEventListener("resize", handleResize);
-
-        return () => {
-          window.removeEventListener("resize", handleResize);
-          if (animationId) {
-            cancelAnimationFrame(animationId);
-          }
-        };
-      } catch (error) {
-        console.error("Three.js failed to load:", error);
-      }
-    };
-
-    init();
-
-    return () => {
-      if (animationId) {
-        cancelAnimationFrame(animationId);
-      }
-    };
-  }, []);
-
-  if (!mounted) {
-    return (
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5" />
-    );
-  }
-
-  return (
-    <>
-      <div id="threejs-container" className="absolute inset-0 hidden md:block" />
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-background to-accent/5 md:hidden" />
-      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-background/40" />
-    </>
   );
 }
