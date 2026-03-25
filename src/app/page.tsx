@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Play, TrendingUp, Users, DollarSign, Building } from "lucide-react";
+import BlueprintAnimation from "@/components/BlueprintAnimation";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -53,15 +54,14 @@ export default function Home() {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden" style={{ paddingTop: '30vh', paddingBottom: '30vh' }}>
         {/* Blueprint Animation Background */}
         <div className="absolute inset-0 z-0">
-          <iframe
-            src="/blueprint-animation.html"
-            className="w-full h-full border-none"
-            style={{ background: '#0A0B0D' }}
-          />
+          <BlueprintAnimation />
         </div>
+
+        {/* Subtle backdrop overlay for depth */}
+        <div className="absolute inset-0 z-5" style={{ background: 'radial-gradient(circle at center, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.3) 100%)' }} />
 
         {/* Hero Content */}
         <div className="relative z-10 max-w-4xl mx-auto px-6 text-center">
@@ -85,7 +85,7 @@ export default function Home() {
             className="hero-title leading-none mb-6"
             style={{
               fontFamily: 'var(--font-syne)',
-              fontSize: 'clamp(44px, 6.5vw, 88px)',
+              fontSize: 'clamp(28px, 4vw, 52px)',
               fontWeight: '700',
               lineHeight: '1.0',
               letterSpacing: '-0.03em',
@@ -115,32 +115,32 @@ export default function Home() {
             La plateforme collaborative qui connecte architectes, artisans et clients autour d&apos;un seul outil.
           </p>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href="/auth"
               className="inline-flex items-center gap-2 transition-all"
               style={{
                 background: 'linear-gradient(135deg, #FF7A3D 0%, #E8650A 100%)',
                 border: 'none',
-                padding: '12px 28px',
-                fontSize: '14px',
+                padding: '8px 16px',
+                fontSize: '12px',
                 fontWeight: '500',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 letterSpacing: '0.02em',
-                boxShadow: '0 0 20px rgba(255,122,61,0.25)',
+                boxShadow: '0 0 15px rgba(255,122,61,0.2)',
                 color: 'white'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 35px rgba(255,122,61,0.45)';
+                e.currentTarget.style.boxShadow = '0 0 25px rgba(255,122,61,0.35)';
                 e.currentTarget.style.transform = 'translateY(-1px)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow = '0 0 20px rgba(255,122,61,0.25)';
+                e.currentTarget.style.boxShadow = '0 0 15px rgba(255,122,61,0.2)';
                 e.currentTarget.style.transform = 'translateY(0)';
               }}
             >
               Démarrer gratuitement
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-3 h-3" />
             </Link>
             <Link
               href="/dashboard"
@@ -148,10 +148,10 @@ export default function Home() {
               style={{
                 background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.15)',
-                padding: '12px 22px',
-                fontSize: '14px',
+                padding: '8px 14px',
+                fontSize: '12px',
                 color: 'rgba(255,255,255,0.8)',
-                borderRadius: '8px',
+                borderRadius: '6px',
                 backdropFilter: 'blur(8px)'
               }}
               onMouseEnter={(e) => {
@@ -163,7 +163,7 @@ export default function Home() {
                 e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
               }}
             >
-              <Play className="w-4 h-4" />
+              <Play className="w-3 h-3" />
               Voir la démo
             </Link>
           </div>
