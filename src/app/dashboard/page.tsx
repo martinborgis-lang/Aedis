@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Progress } from "@/components/ui/progress"
+import ActivityFeed from "@/components/ActivityFeed"
 
 const MOCK_PROJECTS: Project[] = [
   { id: "demo-1", name: "R\u00e9novation Villa M\u00e9diterran\u00e9e", address: "12 Rue des Oliviers, Nice", client_name: "M. Dupont", status: "active", portal_token: "demo-1", portal_enabled: true, created_at: "2024-01-01T00:00:00Z", updated_at: "2024-03-15T00:00:00Z", client_email: null, client_phone: null, description: null, start_date: null, estimated_end_date: null, model_url: null, user_id: "demo" },
@@ -26,6 +27,88 @@ const SORT_LABELS: Record<SortKey, string> = {
   updated_at: "Derni\u00e8re mise \u00e0 jour",
   name: "Nom",
   status: "Statut",
+}
+
+function ProjectCard({ project, taskCount }: { project: Project; taskCount?: { total: number; completed: number } }) {
+  const progress = taskCount && taskCount.total > 0
+    ? Math.round((taskCount.completed / taskCount.total) * 100)
+    : 0;
+
+  return (
+    <Link href={`/projects/${project.id}`}>
+      <div className="bg-white border border-gray-100 rounded-xl p-5
+                      hover:border-orange-200 hover:shadow-sm transition-all cursor-pointer">
+
+        {/* Header */}
+        <div className="flex items-start justify-between mb-3">
+          <div>
+            <h3 className="font-medium text-gray-900">{project.name}</h3>
+            <p className="text-sm text-gray-500 mt-0.5">{project.address}</p>
+          </div>
+          <span className={`text-xs px-2 py-1 rounded-full ${
+            project.status === 'active'
+              ? 'bg-green-50 text-green-700'
+              : 'bg-gray-100 text-gray-500'
+          }`}>
+            {project.status === 'active' ? 'Actif' : project.status}
+          </span>
+        </div>
+
+        {/* Client */}
+        <p className="text-sm text-gray-600 mb-3">
+          Client : <span className="font-medium">{project.client_name}</span>
+        </p>
+
+        {/* Progress bar */}
+        {taskCount && taskCount.total > 0 && (
+          <div className="mb-3">
+            <div className="flex justify-between text-xs text-gray-500 mb-1">
+              <span>Progression</span>
+              <span>{progress}%</span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-1.5">
+              <div
+                className="h-1.5 rounded-full bg-[#E8650A]"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Mini stats row */}
+        <div className="flex gap-4 pt-3 border-t border-gray-50">
+          <div className="text-center">
+            <p className="text-sm font-semibold text-gray-800">
+              {taskCount?.total || 0}
+            </p>
+            <p className="text-xs text-gray-400">tâches</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-orange-500">
+              0
+            </p>
+            <p className="text-xs text-gray-400">réserves</p>
+          </div>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-gray-800">
+              —
+            </p>
+            <p className="text-xs text-gray-400">budget</p>
+          </div>
+          {project.created_at && (
+            <div className="text-center ml-auto">
+              <p className="text-xs text-gray-400">
+                {new Date(project.created_at).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'short'
+                })}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </Link>
+  )
 }
 
 export default function DashboardPage() {
@@ -118,11 +201,13 @@ export default function DashboardPage() {
   }
 
   const stats = useMemo(() => {
-    const active = projects.filter(p => p.status === "active").length
+    const activeCount = projects.filter(p => p.status === "active").length
     const completed = projects.filter(p => p.status === "completed").length
     const totalTasks = Object.values(taskCounts).reduce((s, c) => s + c.total, 0)
     const completedTasks = Object.values(taskCounts).reduce((s, c) => s + c.completed, 0)
-    return { active, completed, totalTasks, completedTasks }
+    const overdueCount = 3 // Mock data for overdue tasks
+    const reservesCount = 2 // Mock data for open reserves
+    return { activeCount, completed, totalTasks, completedTasks, overdueCount, reservesCount }
   }, [projects, taskCounts])
 
   const handleLogout = async () => {
@@ -156,100 +241,73 @@ export default function DashboardPage() {
       )}
 
       <main className="max-w-6xl mx-auto px-8 py-8">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="rounded-xl bg-accent/10 p-3">
-                  <FolderKanban className="h-5 w-5 text-accent" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{projects.length}</p>
-                  <p className="text-sm text-muted-foreground">Projets</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="rounded-xl bg-emerald-500/10 p-3">
-                  <Clock className="h-5 w-5 text-emerald-600" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.active}</p>
-                  <p className="text-sm text-muted-foreground">Actifs</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="rounded-xl bg-blue-500/10 p-3">
-                  <CheckCircle2 className="h-5 w-5 text-blue-600" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.completedTasks}</p>
-                  <p className="text-sm text-muted-foreground">T&acirc;ches termin&eacute;es</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="rounded-xl bg-purple-500/10 p-3">
-                  <TrendingUp className="h-5 w-5 text-purple-600" />
-                </div>
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">{stats.totalTasks}</p>
-                  <p className="text-sm text-muted-foreground">T&acirc;ches totales</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Small compact stats at the top */}
+        <div className="flex gap-4 mb-8 flex-wrap">
+          {[
+            { label: 'Projets', value: projects.length, icon: '📁' },
+            { label: 'Actifs', value: stats.activeCount, icon: '🟢' },
+            { label: 'Tâches terminées', value: stats.completedTasks, icon: '✓' },
+            { label: 'Tâches totales', value: stats.totalTasks, icon: '📋' },
+            { label: 'En retard', value: stats.overdueCount, icon: '⚠', alert: stats.overdueCount > 0 },
+            { label: 'Réserves ouvertes', value: stats.reservesCount, icon: '🔴', alert: stats.reservesCount > 0 },
+          ].map(stat => (
+            <div key={stat.label}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg border text-sm
+                ${stat.alert ? 'border-orange-200 bg-orange-50' : 'border-gray-100 bg-white'}`}>
+              <span className="text-base">{stat.icon}</span>
+              <span className={`font-semibold ${stat.alert ? 'text-orange-600' : 'text-gray-800'}`}>
+                {stat.value}
+              </span>
+              <span className="text-gray-500">{stat.label}</span>
+            </div>
+          ))}
         </div>
 
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-2xl font-semibold text-foreground">Mes Projets</h2>
-          <Button asChild>
-            <Link href="/projects/new">
-              <Plus className="h-4 w-4 mr-2" />
-              Nouveau projet
-            </Link>
-          </Button>
-        </div>
+        {/* Main content — 2 columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-        {projects.length > 0 && (
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher un projet..."
-                className="pl-9"
-              />
+          {/* Left: Projects list (2/3 width) */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-medium">Mes projets</h2>
+              <Button asChild>
+                <Link href="/projects/new">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nouveau projet
+                </Link>
+              </Button>
             </div>
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <Select value={sortBy} onValueChange={(value: SortKey) => setSortBy(value)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={SORT_LABELS[sortBy]} />
-                </SelectTrigger>
-                <SelectContent>
-                  {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
-                    <SelectItem key={key} value={key}>
-                      {SORT_LABELS[key]}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        )}
+
+            {/* Search and sort controls */}
+            {projects.length > 0 && (
+              <div className="flex flex-col sm:flex-row gap-3 mb-4">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Rechercher un projet..."
+                    className="pl-9"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+                  <Select value={sortBy} onValueChange={(value: SortKey) => setSortBy(value)}>
+                    <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder={SORT_LABELS[sortBy]} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(Object.keys(SORT_LABELS) as SortKey[]).map((key) => (
+                        <SelectItem key={key} value={key}>
+                          {SORT_LABELS[key]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
 
         {projects.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -276,51 +334,24 @@ export default function DashboardPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredProjects.map((project) => {
-              const progress = getProgress(project.id)
-              return (
-                <Card key={project.id} className="group hover:shadow-lg transition-all duration-200 hover:border-accent/20">
-                  <Link href={`/projects/${project.id}`} className="block">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col h-full space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-base text-foreground group-hover:text-accent transition-colors line-clamp-2">
-                              {project.name}
-                            </h3>
-                            <p className="text-muted-foreground text-sm mt-1">{project.address}</p>
-                            <p className="text-foreground/70 text-sm">{project.client_name}</p>
-                          </div>
-                          <StatusBadge status={project.status} />
-                        </div>
-
-                        {progress !== null && (
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-muted-foreground">Progression</span>
-                              <span className="font-medium text-foreground">{progress}%</span>
-                            </div>
-                            <Progress value={progress} className="h-2" />
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2 border-t">
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(project.updated_at).toLocaleDateString("fr-FR")}
-                          </span>
-                          <span className="flex items-center gap-1 text-accent text-sm font-medium opacity-0 group-hover:opacity-100 transition-opacity">
-                            Ouvrir <ArrowRight className="h-3 w-3" />
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Link>
-                </Card>
-              )
-            })}
+              <div className="space-y-3">
+                {filteredProjects.map(project => (
+                  <ProjectCard
+                    key={project.id}
+                    project={project}
+                    taskCount={taskCounts[project.id]}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+
+          {/* Right: Activity feed (1/3 width) */}
+          <div className="lg:col-span-1">
+            <ActivityFeed projectIds={projects.map(p => p.id)} />
+          </div>
+
+        </div>
       </main>
     </div>
   )

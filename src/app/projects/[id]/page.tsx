@@ -296,6 +296,21 @@ export default function ProjectDetailPage() {
         .eq("id", taskId);
 
       setTasks(tasks.map(t => t.id === taskId ? { ...t, ...updates } : t));
+
+      // Log to activity feed if task is completed
+      if (status === 'completed') {
+        const task = tasks.find(t => t.id === taskId);
+        if (task && project) {
+          await supabase.from('activity_feed').insert({
+            project_id: project.id,
+            project_name: project.name,
+            type: 'task_completed',
+            actor_name: 'Architecte',
+            actor_type: 'architect',
+            description: `Tâche "${task.name}" terminée`
+          }).catch(err => console.error('Error logging activity:', err));
+        }
+      }
     } catch (error) {
       console.error("Error updating task status:", error);
     }
@@ -318,6 +333,21 @@ export default function ProjectDetailPage() {
         .eq("id", taskId);
 
       setTasks(tasks.map(t => t.id === taskId ? { ...t, ...updates } : t));
+
+      // Log to activity feed if task is completed
+      if (clamped === 100 || status === 'completed') {
+        const task = tasks.find(t => t.id === taskId);
+        if (task && project) {
+          await supabase.from('activity_feed').insert({
+            project_id: project.id,
+            project_name: project.name,
+            type: 'task_completed',
+            actor_name: 'Architecte',
+            actor_type: 'architect',
+            description: `Tâche "${task.name}" terminée`
+          }).catch(err => console.error('Error logging activity:', err));
+        }
+      }
     } catch (error) {
       console.error("Error updating task progress:", error);
     }
@@ -828,6 +858,9 @@ export default function ProjectDetailPage() {
     }
   };
 
+  const [tempBudgetValues, setTempBudgetValues] = useState<Record<string, { budget_prevu?: number; budget_depense?: number }>>({});
+  const [savingBudget, setSavingBudget] = useState<string | null>(null);
+
   const updateTaskBudget = async (taskId: string, field: 'budget_prevu' | 'budget_depense', value: number) => {
     if (isDemo) return;
 
@@ -841,10 +874,73 @@ export default function ProjectDetailPage() {
 
       // Update local state
       setTasks(tasks.map(t => t.id === taskId ? { ...t, [field]: value } : t));
-      setEditingBudget(null);
+
+      // Log to budget_history if exists
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        await supabase.from('budget_history').insert({
+          project_id: projectId,
+          task_id: taskId,
+          type: field === 'budget_prevu' ? 'prevu' : 'depense',
+          amount_before: (task as any)[field] || 0,
+          amount_after: value,
+          created_by: user?.id
+        }).catch(() => {}); // Silent fail if table doesn't exist
+      }
     } catch (error) {
       console.error("Error updating budget:", error);
     }
+  };
+
+  const handleSaveBudget = async (taskId: string) => {
+    setSavingBudget(taskId);
+    const temp = tempBudgetValues[taskId];
+    if (!temp) {
+      setSavingBudget(null);
+      setEditingBudget(null);
+      return;
+    }
+
+    try {
+      if (temp.budget_prevu !== undefined) {
+        await updateTaskBudget(taskId, 'budget_prevu', temp.budget_prevu);
+      }
+      if (temp.budget_depense !== undefined) {
+        await updateTaskBudget(taskId, 'budget_depense', temp.budget_depense);
+      }
+
+      // Clear temp values
+      setTempBudgetValues(prev => {
+        const newState = { ...prev };
+        delete newState[taskId];
+        return newState;
+      });
+
+      setEditingBudget(null);
+    } catch (error) {
+      console.error("Error saving budget:", error);
+    } finally {
+      setSavingBudget(null);
+    }
+  };
+
+  const handleCancelBudget = (taskId: string) => {
+    setTempBudgetValues(prev => {
+      const newState = { ...prev };
+      delete newState[taskId];
+      return newState;
+    });
+    setEditingBudget(null);
+  };
+
+  const updateTempBudget = (taskId: string, field: 'budget_prevu' | 'budget_depense', value: number) => {
+    setTempBudgetValues(prev => ({
+      ...prev,
+      [taskId]: {
+        ...prev[taskId],
+        [field]: value
+      }
+    }));
   };
 
   if (loading) {
@@ -1364,7 +1460,7 @@ export default function ProjectDetailPage() {
 
         {activeTab === 'reserves' && (
           <div className="space-y-6">
-            <ReservesList projectId={project.id} isDemo={isDemo} />
+            <ReservesList projectId={project.id} projectName={project.name} isDemo={isDemo} />
           </div>
         )}
 
@@ -1627,17 +1723,27 @@ export default function ProjectDetailPage() {
               </CardContent>
             </Card>
 
-            {/* Chart */}
-            {chartData.length > 0 && (
+            {/* Chart - Only show when at least one task has budget_prevu > 0 */}
+            {chartData.length > 0 && chartData.some(item => item.prevu > 0) && (
               <Card>
                 <CardHeader>
                   <CardTitle>Répartition budgétaire par tâche</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div style={{ width: '100%', height: '400px' }}>
+                  <div style={{ width: '100%', height: '280px' }}>
                     <ResponsiveContainer>
-                      <BarChart data={chartData}>
-                        <XAxis dataKey="name" />
+                      <BarChart
+                        data={chartData}
+                        barCategoryGap="40%"
+                        margin={{ top: 10, right: 20, left: 20, bottom: 60 }}
+                      >
+                        <XAxis
+                          dataKey="name"
+                          angle={-35}
+                          textAnchor="end"
+                          tick={{ fontSize: 11 }}
+                          interval={0}
+                        />
                         <YAxis tickFormatter={(value) => `${value}€`} />
                         <Tooltip
                           formatter={(value, name) => [`${value}€`, name === 'prevu' ? 'Budget prévu' : 'Dépensé']}
@@ -1647,8 +1753,8 @@ export default function ProjectDetailPage() {
                           }}
                         />
                         <Legend />
-                        <Bar dataKey="prevu" fill="#E8650A" name="Budget prévu" />
-                        <Bar dataKey="depense" fill="#6B7280" name="Dépensé" />
+                        <Bar dataKey="prevu" name="Budget prévu" fill="#E8650A" barSize={20} />
+                        <Bar dataKey="depense" name="Dépensé" fill="#94a3b8" barSize={20} />
                       </BarChart>
                     </ResponsiveContainer>
                   </div>
@@ -1692,25 +1798,47 @@ export default function ProjectDetailPage() {
                             </td>
                             <td className="py-3 px-4 text-right">
                               {isEditing ? (
-                                <input
-                                  type="number"
-                                  defaultValue={budgetPrevu}
-                                  className="w-24 px-2 py-1 border border-gray-200 rounded text-sm text-right"
-                                  onBlur={(e) => updateTaskBudget(task.id, 'budget_prevu', parseFloat(e.target.value) || 0)}
-                                  autoFocus
-                                />
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    defaultValue={budgetPrevu}
+                                    className="w-24 border border-gray-200 rounded px-2 py-1 text-sm text-right"
+                                    style={{
+                                      MozAppearance: 'textfield',
+                                      WebkitAppearance: 'none'
+                                    }}
+                                    id={`budget-prevu-${task.id}`}
+                                    onChange={(e) => updateTempBudget(task.id, 'budget_prevu', parseFloat(e.target.value) || 0)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveBudget(task.id);
+                                      if (e.key === 'Escape') handleCancelBudget(task.id);
+                                    }}
+                                    autoFocus
+                                  />
+                                </div>
                               ) : (
                                 <span className="text-sm">{budgetPrevu.toLocaleString('fr-FR')} €</span>
                               )}
                             </td>
                             <td className="py-3 px-4 text-right">
                               {isEditing ? (
-                                <input
-                                  type="number"
-                                  defaultValue={budgetDepense}
-                                  className="w-24 px-2 py-1 border border-gray-200 rounded text-sm text-right"
-                                  onBlur={(e) => updateTaskBudget(task.id, 'budget_depense', parseFloat(e.target.value) || 0)}
-                                />
+                                <div className="flex items-center gap-2">
+                                  <input
+                                    type="number"
+                                    defaultValue={budgetDepense}
+                                    className="w-24 border border-gray-200 rounded px-2 py-1 text-sm text-right"
+                                    style={{
+                                      MozAppearance: 'textfield',
+                                      WebkitAppearance: 'none'
+                                    }}
+                                    id={`budget-depense-${task.id}`}
+                                    onChange={(e) => updateTempBudget(task.id, 'budget_depense', parseFloat(e.target.value) || 0)}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') handleSaveBudget(task.id);
+                                      if (e.key === 'Escape') handleCancelBudget(task.id);
+                                    }}
+                                  />
+                                </div>
                               ) : (
                                 <span className="text-sm">{budgetDepense.toLocaleString('fr-FR')} €</span>
                               )}
@@ -1725,12 +1853,43 @@ export default function ProjectDetailPage() {
                             </td>
                             <td className="py-3 px-4 text-center">
                               {!isDemo && (
-                                <button
-                                  onClick={() => setEditingBudget(editingBudget === task.id ? null : task.id)}
-                                  className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                                >
-                                  <Edit3 className="h-4 w-4" />
-                                </button>
+                                <div className="flex items-center justify-center gap-1">
+                                  {isEditing ? (
+                                    <>
+                                      <button
+                                        onClick={() => handleSaveBudget(task.id)}
+                                        disabled={savingBudget === task.id}
+                                        className="text-green-600 hover:text-green-700 text-sm font-medium px-2 py-1 rounded disabled:opacity-50"
+                                      >
+                                        {savingBudget === task.id ? '...' : '✓'}
+                                      </button>
+                                      <button
+                                        onClick={() => handleCancelBudget(task.id)}
+                                        disabled={savingBudget === task.id}
+                                        className="text-gray-400 hover:text-gray-600 text-sm px-2 py-1 rounded disabled:opacity-50"
+                                      >
+                                        ✗
+                                      </button>
+                                    </>
+                                  ) : (
+                                    <button
+                                      onClick={() => {
+                                        setEditingBudget(task.id);
+                                        // Initialize temp values with current values
+                                        setTempBudgetValues(prev => ({
+                                          ...prev,
+                                          [task.id]: {
+                                            budget_prevu: budgetPrevu,
+                                            budget_depense: budgetDepense
+                                          }
+                                        }));
+                                      }}
+                                      className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                      <Edit3 className="h-4 w-4" />
+                                    </button>
+                                  )}
+                                </div>
                               )}
                             </td>
                           </tr>

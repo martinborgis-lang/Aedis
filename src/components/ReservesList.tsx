@@ -26,6 +26,7 @@ import { PhotoLightbox } from "./PhotoLightbox";
 
 interface ReservesListProps {
   projectId: string;
+  projectName?: string;
   isDemo?: boolean;
   artisanTokens?: ArtisanToken[];
 }
@@ -33,6 +34,7 @@ interface ReservesListProps {
 
 export const ReservesList: React.FC<ReservesListProps> = ({
   projectId,
+  projectName,
   isDemo = false,
   artisanTokens = [],
 }) => {
@@ -175,6 +177,16 @@ export const ReservesList: React.FC<ReservesListProps> = ({
         });
         setReservePhoto(null);
         setShowForm(false);
+
+        // Log to activity feed
+        await supabase.from('activity_feed').insert({
+          project_id: projectId,
+          project_name: projectName || 'Projet',
+          type: 'reserve_opened',
+          actor_name: 'Architecte',
+          actor_type: 'architect',
+          description: `Réserve ouverte : "${data.title}"`
+        }).catch(err => console.error('Error logging activity:', err));
       }
     } catch (error) {
       console.error("Error creating reserve:", error);
