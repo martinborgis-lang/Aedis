@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowRight, Play, TrendingUp, Users, DollarSign, Building } from "lucide-react";
 import BlueprintAnimation from "@/components/BlueprintAnimation";
+import MiniGanttDemo from "@/components/MiniGanttDemo";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -335,7 +336,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20" style={{ background: '#020818' }}>
+      <section id="features" className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-syne mb-6">
@@ -530,35 +531,15 @@ export default function Home() {
               ))}
             </div>
 
-            <div style={{
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '16px',
-              padding: '32px',
-              aspectRatio: '1',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <div style={{ textAlign: 'center' }}>
-                <Building style={{
-                  width: '64px',
-                  height: '64px',
-                  color: '#FF7A3D',
-                  margin: '0 auto 16px'
-                }} />
-                <p style={{
-                  color: 'rgba(255,255,255,0.5)',
-                  fontSize: '14px'
-                }}>Interface collaborative en action</p>
-              </div>
+            <div style={{ position: 'sticky', top: '120px' }}>
+              <MiniGanttDemo />
             </div>
           </div>
         </div>
       </section>
 
       {/* 3 Roles Section */}
-      <section id="roles" className="py-20" style={{ background: '#020818' }}>
+      <section id="roles" className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-5xl font-syne mb-6">
