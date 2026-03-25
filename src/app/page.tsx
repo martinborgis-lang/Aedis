@@ -119,7 +119,7 @@ export default function Home() {
           zIndex: 10,
           textAlign: 'center',
           padding: '0 24px',
-          maxWidth: '600px',
+          maxWidth: '800px',
           marginTop: '-60px'
         }}>
           <div style={{
@@ -170,7 +170,7 @@ export default function Home() {
             lineHeight: '1.6',
             marginBottom: '24px',
             fontWeight: '300',
-            maxWidth: '360px',
+            maxWidth: '500px',
             margin: '0 auto 24px',
             opacity: 0,
             animation: 'fadeInUp 0.6s ease 0.8s forwards'
@@ -194,8 +194,8 @@ export default function Home() {
                 background: 'rgba(255,122,61,0.7)',
                 border: '1px solid rgba(255,122,61,0.4)',
                 color: 'rgba(255,255,255,0.9)',
-                padding: '9px 20px',
-                fontSize: '12px',
+                padding: '12px 24px',
+                fontSize: '14px',
                 fontWeight: '500',
                 borderRadius: '6px',
                 letterSpacing: '0.02em',
@@ -224,8 +224,8 @@ export default function Home() {
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.12)',
                 color: 'rgba(255,255,255,0.5)',
-                padding: '9px 18px',
-                fontSize: '12px',
+                padding: '12px 22px',
+                fontSize: '14px',
                 fontWeight: '400',
                 borderRadius: '6px',
                 backdropFilter: 'blur(8px)',
@@ -249,23 +249,12 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Continue fade to next section */}
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: '120px',
-          background: 'linear-gradient(to bottom, transparent, #000510)',
-          zIndex: 10,
-          pointerEvents: 'none'
-        }} />
       </section>
 
       {/* Stats Bar */}
       <section
         style={{
-          background: 'transparent'
+          background: '#000510'
         }}
       >
         <div style={{
@@ -284,7 +273,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20" style={{ background: 'rgba(255,255,255,0.015)' }}>
+      <section id="features" className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <AnimatedTitle>
@@ -429,7 +418,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="py-20" style={{ background: 'transparent' }}>
+      <section id="how-it-works" className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
@@ -494,7 +483,7 @@ export default function Home() {
       </section>
 
       {/* 3 Roles Section */}
-      <section id="roles" className="py-20" style={{ background: 'rgba(255,255,255,0.015)' }}>
+      <section id="roles" className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center mb-16">
             <AnimatedTitle>
@@ -551,7 +540,7 @@ export default function Home() {
       </section>
 
       {/* Email Capture */}
-      <section className="py-20" style={{ background: 'transparent' }}>
+      <section className="py-20" style={{ background: '#000510' }}>
         <div className="max-w-3xl mx-auto px-6 text-center">
           <AnimatedTitle>
             <h2 className="text-3xl md:text-5xl font-syne mb-6">
@@ -592,7 +581,7 @@ export default function Home() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12" style={{ background: 'transparent' }}>
+      <footer className="py-12" style={{ background: '#000510' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center text-muted-foreground">
             <p className="mb-4">© 2026 Aedis · du latin aedes : l&apos;édifice</p>
