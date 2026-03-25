@@ -301,14 +301,18 @@ export default function ProjectDetailPage() {
       if (status === 'completed') {
         const task = tasks.find(t => t.id === taskId);
         if (task && project) {
-          await supabase.from('activity_feed').insert({
-            project_id: project.id,
-            project_name: project.name,
-            type: 'task_completed',
-            actor_name: 'Architecte',
-            actor_type: 'architect',
-            description: `Tâche "${task.name}" terminée`
-          }).catch(err => console.error('Error logging activity:', err));
+          try {
+            await supabase.from('activity_feed').insert({
+              project_id: project.id,
+              project_name: project.name,
+              type: 'task_completed',
+              actor_name: 'Architecte',
+              actor_type: 'architect',
+              description: `Tâche "${task.name}" terminée`
+            });
+          } catch (activityErr) {
+            console.error('Error logging activity:', activityErr);
+          }
         }
       }
     } catch (error) {
@@ -338,14 +342,18 @@ export default function ProjectDetailPage() {
       if (clamped === 100 || status === 'completed') {
         const task = tasks.find(t => t.id === taskId);
         if (task && project) {
-          await supabase.from('activity_feed').insert({
-            project_id: project.id,
-            project_name: project.name,
-            type: 'task_completed',
-            actor_name: 'Architecte',
-            actor_type: 'architect',
-            description: `Tâche "${task.name}" terminée`
-          }).catch(err => console.error('Error logging activity:', err));
+          try {
+            await supabase.from('activity_feed').insert({
+              project_id: project.id,
+              project_name: project.name,
+              type: 'task_completed',
+              actor_name: 'Architecte',
+              actor_type: 'architect',
+              description: `Tâche "${task.name}" terminée`
+            });
+          } catch (activityErr) {
+            console.error('Error logging activity:', activityErr);
+          }
         }
       }
     } catch (error) {
@@ -878,14 +886,18 @@ export default function ProjectDetailPage() {
       // Log to budget_history if exists
       const task = tasks.find(t => t.id === taskId);
       if (task) {
-        await supabase.from('budget_history').insert({
-          project_id: projectId,
-          task_id: taskId,
-          type: field === 'budget_prevu' ? 'prevu' : 'depense',
-          amount_before: (task as any)[field] || 0,
-          amount_after: value,
-          created_by: user?.id
-        }).catch(() => {}); // Silent fail if table doesn't exist
+        try {
+          await supabase.from('budget_history').insert({
+            project_id: projectId,
+            task_id: taskId,
+            type: field === 'budget_prevu' ? 'prevu' : 'depense',
+            amount_before: (task as any)[field] || 0,
+            amount_after: value,
+            created_by: null
+          });
+        } catch (historyError) {
+          // Silent fail if table doesn't exist
+        }
       }
     } catch (error) {
       console.error("Error updating budget:", error);

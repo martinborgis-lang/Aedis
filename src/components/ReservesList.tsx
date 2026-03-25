@@ -179,14 +179,18 @@ export const ReservesList: React.FC<ReservesListProps> = ({
         setShowForm(false);
 
         // Log to activity feed
-        await supabase.from('activity_feed').insert({
-          project_id: projectId,
-          project_name: projectName || 'Projet',
-          type: 'reserve_opened',
-          actor_name: 'Architecte',
-          actor_type: 'architect',
-          description: `Réserve ouverte : "${data.title}"`
-        }).catch(err => console.error('Error logging activity:', err));
+        try {
+          await supabase.from('activity_feed').insert({
+            project_id: projectId,
+            project_name: projectName || 'Projet',
+            type: 'reserve_opened',
+            actor_name: 'Architecte',
+            actor_type: 'architect',
+            description: `Réserve ouverte : "${data.title}"`
+          });
+        } catch (err) {
+          console.error('Error logging activity:', err);
+        }
       }
     } catch (error) {
       console.error("Error creating reserve:", error);

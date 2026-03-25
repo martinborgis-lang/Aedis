@@ -254,13 +254,14 @@ export default function ArtisanPortalPage() {
 
           // Log to activity feed
           try {
+            const currentTask = tasks.find(t => t.id === taskId);
             await supabase.from('activity_feed').insert({
               project_id: artisanToken.project_id,
               project_name: 'Projet', // Project name not available in artisan context
               type: 'photo_uploaded',
               actor_name: artisanToken.artisan_name,
               actor_type: 'artisan',
-              description: `${artisanToken.artisan_name} a uploadé une photo pour "${task.name}"`
+              description: `${artisanToken.artisan_name} a uploadé une photo${currentTask ? ` pour "${currentTask.name}"` : ''}`
             });
           } catch (activityErr) {
             console.error('Error logging activity:', activityErr);
