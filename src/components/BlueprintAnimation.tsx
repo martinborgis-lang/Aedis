@@ -27,7 +27,7 @@ export default function BlueprintAnimation() {
 
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(42, w/h, 0.1, 1000)
-      camera.position.set(22, 16, 22)
+      camera.position.set(14.5, 10.5, 14.5)
       camera.lookAt(0, 4, 0)
 
       const edges: any[] = []

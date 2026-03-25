@@ -158,7 +158,7 @@ export default function Home() {
             marginBottom: '12px',
             fontFamily: 'var(--font-syne)'
           }}>
-            <span style={{ opacity: 0, animation: 'fadeInUp 0.8s ease 0.4s forwards' }}>Gérez vos chantiers.</span><br/>
+            <span style={{ opacity: 0, animation: 'fadeInUp 0.8s ease 0.4s forwards' }}>Gérez vos chantiers. </span>
             <em style={{ fontStyle: 'normal', color: 'rgba(255,122,61,0.75)', opacity: 0, animation: 'fadeInUp 0.8s ease 0.6s forwards' }}>
               Votre réputation suit.
             </em>
@@ -194,7 +194,7 @@ export default function Home() {
                 background: 'rgba(255,122,61,0.7)',
                 border: '1px solid rgba(255,122,61,0.4)',
                 color: 'rgba(255,255,255,0.9)',
-                padding: '12px 24px',
+                padding: '14px 28px',
                 fontSize: '14px',
                 fontWeight: '500',
                 borderRadius: '6px',
@@ -203,7 +203,8 @@ export default function Home() {
                 cursor: 'pointer',
                 transition: 'background 0.2s, opacity 0.2s',
                 textDecoration: 'none',
-                display: 'inline-block'
+                display: 'inline-flex',
+                alignItems: 'center'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.background = 'rgba(255,122,61,0.9)';
@@ -215,7 +216,7 @@ export default function Home() {
               }}
             >
               Démarrer gratuitement
-              <ArrowRight className="w-3 h-3" />
+              <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
               href="/dashboard"
@@ -224,7 +225,7 @@ export default function Home() {
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.12)',
                 color: 'rgba(255,255,255,0.5)',
-                padding: '12px 22px',
+                padding: '14px 26px',
                 fontSize: '14px',
                 fontWeight: '400',
                 borderRadius: '6px',
@@ -232,7 +233,8 @@ export default function Home() {
                 cursor: 'pointer',
                 transition: 'all 0.2s',
                 textDecoration: 'none',
-                display: 'inline-block'
+                display: 'inline-flex',
+                alignItems: 'center'
               }}
               onMouseEnter={(e) => {
                 e.currentTarget.style.borderColor = 'rgba(255,122,61,0.3)';
@@ -243,7 +245,7 @@ export default function Home() {
                 e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
               }}
             >
-              <Play className="w-3 h-3" />
+              <Play className="w-4 h-4" />
               Voir la démo
             </Link>
           </div>
