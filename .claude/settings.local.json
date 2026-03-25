@@ -1,30 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install)",
-      "Bash(npm run build)",
-      "Bash(rm nul)",
-      "Bash(git add .)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Project improvements and build verification\n\n- Verified build process works correctly\n- Cleaned up repository state\n- Removed unnecessary files\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(git push origin main)",
-      "Bash(git pull origin main)",
-      "Bash(npm info @pascal-app/viewer versions)",
-      "Bash(npm info @pascal-app/core versions)",
-      "Bash(npm install --legacy-peer-deps)",
-      "Bash(cat node_modules/@pascal-app/viewer/dist/index.d.ts)",
-      "Bash(cat node_modules/@pascal-app/core/dist/index.d.ts)",
-      "Bash(npm info @pascal-app/viewer@0.1.13 peerDependencies)",
-      "Bash(npm install @pascal-app/viewer@0.1.13 --legacy-peer-deps)",
-      "Bash(git checkout HEAD -- package-lock.json)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfix: Pascal package version conflict + stable build\n\n- Fixed @pascal-app/viewer and @pascal-app/core version compatibility\n- Downgraded to viewer@0.1.13 and core@0.1.13 for compatibility\n- Updated package.json to resolve ERESOLVE conflicts\n- Verified build now passes with \"✓ Compiled successfully\"\n- Pascal 3D viewer integration working\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")",
-      "Bash(npm uninstall @pascal-app/core @pascal-app/viewer @react-three/fiber @react-three/drei)",
-      "Bash(git commit -m \"fix: replace Pascal npm packages with iframe approach\n\n- Removed @pascal-app/core, @pascal-app/viewer, @react-three/fiber, @react-three/drei packages\n- Deleted PascalViewerInner.tsx component  \n- Replaced PascalViewer with iframe-based approach using editor.pascal.app\n- Updated projects page to show Pascal Editor link instead of client-side rendering\n- Removed sceneData loading and processing logic from portal page\n- Kept three.js package for landing page 3D background\n- Build now passes with zero dependency conflicts\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
-      "Bash(git commit -m \"fix: landing page CTA buttons\n\n- Fixed ''Voir la démo'' button to scroll smoothly to features section\n- ''Démarrer gratuitement'' already correctly links to /auth\n- ''Se connecter'' in navbar already correctly links to /auth\n- Improved user experience with smooth scroll demo navigation\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
-      "Bash(git commit -m \"fix: demo button redirects to dashboard with demo data\n\n- Changed ''Voir la démo'' button from scroll to Link pointing to /dashboard\n- Dashboard shows pre-registered demo project data for proper demo experience\n- Visitors can now see actual Aedis interface with realistic data\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
-      "Bash(npm install recharts)",
-      "Bash(npm run dev)",
-      "Bash(git checkout HEAD -- src/app/dashboard/page.tsx)",
-      "Bash(git commit -m \"$(cat <<''EOF''\nfeat: Sprint P1 - 5 nouvelles features majeures Aedis\n\n✨ Feature 1: Système de suivi budgétaire complet\n- Dashboard avec métriques temps réel (prévu/dépensé/reste/%)\n- Visualisation Recharts avec graphiques comparatifs  \n- Édition inline des budgets avec mise à jour automatique\n- Alertes visuelles pour dépassements budgétaires (>80%)\n\n✨ Feature 2: Gestion documents artisans bidirectionnelle\n- Workflow complet: demande → upload → validation\n- 4 types obligatoires: K-bis, Assurance décennale, RC, RGE\n- Interface dédiée côté artisan avec drag & drop\n- Système de validation/rejet avec historique\n\n✨ Feature 3: Automatisation rappels emails avec Brevo\n- Intégration API Brevo avec templates responsive\n- Cron job quotidien (8h) pour tâches en retard\n- Templates métier avec design system Aedis (#E8650A)\n- Anti-spam et traçabilité complète des envois\n\n✨ Feature 4: Tracking avancé lecture des rapports\n- Pixel tracking invisible pour détection d''ouverture\n- Tokens uniques par destinataire avec crypto.randomUUID()\n- Analytics d''engagement avec horodatage précis\n- Respect RGPD avec tracking non-intrusif\n\n✨ Feature 5: Dashboard d''activité temps réel\n- Feed intelligent multi-projets avec categorisation\n- Icônes contextuelles par type d''activité (📸✓⚠📁)\n- Algorithme de temps relatif optimisé (5m, 2h, 3j)\n- Component réutilisable pour intégration dashboard\n\n🛠️ Améliorations techniques:\n- Ajout Recharts pour visualisations budgétaires\n- 4 nouveaux endpoints API (/cron/reminders, /reports/*)\n- Configuration Vercel cron jobs automatiques\n- Extension types database pour champs budgétaires\n- Composants ReminderHistory et ActivityFeed\n\n🎯 Impact métier:\n- Contrôle financier total avec alertes dépassements\n- Conformité réglementaire documentaire automatisée  \n- Communication proactive avec artisans\n- Visibilité engagement clients sur rapports\n- Vision d''ensemble activité chantiers temps réel\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\nEOF\n)\")"
+      "Bash(git add -A)",
+      "Bash(git commit -m \"fix: correct TypeScript syntax for activity feed logging\n\n• Fixed .then().catch() syntax issue with Supabase inserts\n• Updated to proper try/catch blocks with await for activity logging\n• Ensures proper error handling without TypeScript conflicts\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")"
     ],
     "deny": [],
     "ask": []

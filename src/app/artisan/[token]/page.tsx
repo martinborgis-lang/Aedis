@@ -159,14 +159,18 @@ export default function ArtisanPortalPage() {
       // Log to activity feed
       const task = tasks.find(t => t.id === taskId);
       if (task && artisanToken) {
-        supabase.from('activity_feed').insert({
-          project_id: artisanToken.project_id,
-          project_name: 'Projet', // Project name not available in artisan context
-          type: 'task_completed',
-          actor_name: artisanToken.artisan_name,
-          actor_type: 'artisan',
-          description: `${artisanToken.artisan_name} a terminé la tâche "${task.name}"`
-        }).then().catch(err => console.error('Error logging activity:', err));
+        try {
+          await supabase.from('activity_feed').insert({
+            project_id: artisanToken.project_id,
+            project_name: 'Projet', // Project name not available in artisan context
+            type: 'task_completed',
+            actor_name: artisanToken.artisan_name,
+            actor_type: 'artisan',
+            description: `${artisanToken.artisan_name} a terminé la tâche "${task.name}"`
+          });
+        } catch (activityErr) {
+          console.error('Error logging activity:', activityErr);
+        }
       }
     } catch (err) {
       console.error("Error updating task:", err);
@@ -249,14 +253,18 @@ export default function ArtisanPortalPage() {
           newPhotos.push(photoData);
 
           // Log to activity feed
-          supabase.from('activity_feed').insert({
-            project_id: artisanToken.project_id,
-            project_name: 'Projet', // Project name not available in artisan context
-            type: 'photo_uploaded',
-            actor_name: artisanToken.artisan_name,
-            actor_type: 'artisan',
-            description: `${artisanToken.artisan_name} a uploadé une photo pour "${task.name}"`
-          }).then().catch(err => console.error('Error logging activity:', err));
+          try {
+            await supabase.from('activity_feed').insert({
+              project_id: artisanToken.project_id,
+              project_name: 'Projet', // Project name not available in artisan context
+              type: 'photo_uploaded',
+              actor_name: artisanToken.artisan_name,
+              actor_type: 'artisan',
+              description: `${artisanToken.artisan_name} a uploadé une photo pour "${task.name}"`
+            });
+          } catch (activityErr) {
+            console.error('Error logging activity:', activityErr);
+          }
         }
       } catch (err) {
         console.error("Error uploading photo:", err);
