@@ -288,16 +288,19 @@ export const VisitsList: React.FC<VisitsListProps> = ({
 
         // Log to activity feed
         try {
+          const { data: { user } } = await supabase.auth.getUser();
           await supabase.from('activity_feed').insert({
             project_id: projectId,
-            project_name: projectName || 'Projet',
+            project_name: projectName || null,
             type: 'visit_created',
-            actor_name: 'Architecte',
+            actor_name: user?.email ?? 'Architecte',
             actor_type: 'architect',
-            description: `Visite créée : "${newVisit.object}"`
+            description: `Visite du ${new Date(newVisit.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })} créée`,
+            entity_id: data.id,
+            entity_type: 'visit'
           });
         } catch (err) {
-          console.error('Error logging activity:', err);
+          console.error('Error logging activity_feed:', err);
         }
       }
 
