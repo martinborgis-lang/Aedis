@@ -1,7 +1,7 @@
 export type ProjectStatus = "active" | "completed" | "archived";
 export type TaskStatus = "pending" | "in_progress" | "completed";
 export type ReservePriority = "low" | "medium" | "high" | "critical";
-export type ReserveStatus = "open" | "in_progress" | "resolved";
+export type ReserveStatus = "open" | "urgent" | "en_retard" | "a_surveiller" | "en_attente" | "programme" | "in_progress" | "acte" | "resolved" | "clos";
 export type VisitPhase = "suivi" | "opr" | "reception" | "livraison";
 export type AttendeeStatus = "present" | "absent" | "excuse" | "absent_non_excuse" | "convoque";
 
@@ -95,15 +95,29 @@ export const RESERVE_PRIORITY_LABELS: Record<ReservePriority, string> = {
 };
 
 export const RESERVE_STATUS_COLORS: Record<ReserveStatus, string> = {
-  open: "#f59e0b",
+  open: "#6b7280",
+  urgent: "#dc2626",
+  en_retard: "#7f1d1d",
+  a_surveiller: "#f97316",
+  en_attente: "#64748b",
+  programme: "#7dd3fc",
   in_progress: "#3b82f6",
+  acte: "#86efac",
   resolved: "#10b981",
+  clos: "#374151",
 };
 
 export const RESERVE_STATUS_LABELS: Record<ReserveStatus, string> = {
-  open: "Ouverte",
+  open: "Ouvert",
+  urgent: "Urgent",
+  en_retard: "En retard",
+  a_surveiller: "À surveiller",
+  en_attente: "En attente",
+  programme: "Programmé",
   in_progress: "En cours",
-  resolved: "Résolue",
+  acte: "Acté",
+  resolved: "Levé",
+  clos: "Clôturé",
 };
 
 export const VISIT_PHASE_LABELS: Record<VisitPhase, string> = {
@@ -185,6 +199,16 @@ export interface Reserve {
   resolved_at: string | null;
   resolution_photo_url: string | null;
   resolution_notes: string | null;
+  // MODULE 2 - nouveaux champs
+  visit_id: string | null;
+  number: string | null;
+  type: "observation" | "remarque" | null;
+  chapter: string | null;
+  sub_chapter: string | null;
+  plan_id: string | null;
+  plan_x: number | null;
+  plan_y: number | null;
+  resolved_note: string | null;
 }
 
 export interface Report {
@@ -216,6 +240,15 @@ export interface VisitAttendee {
   status: AttendeeStatus;
   penalty: boolean;
   created_at: string;
+}
+
+export interface ReserveStatusHistory {
+  id: string;
+  reserve_id: string;
+  status: ReserveStatus;
+  note: string | null;
+  changed_by: string | null;
+  changed_at: string;
 }
 
 export type Database = {

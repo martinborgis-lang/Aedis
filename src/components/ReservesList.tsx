@@ -6,6 +6,8 @@ import {
   Reserve,
   ReservePriority,
   ReserveStatus,
+  ReserveStatusHistory,
+  Visit,
   RESERVE_PRIORITY_COLORS,
   RESERVE_PRIORITY_LABELS,
   RESERVE_STATUS_COLORS,
@@ -20,6 +22,10 @@ import {
   CheckCircle2,
   Trash2,
   User,
+  MapPin,
+  FileText,
+  History,
+  Eye,
 } from "lucide-react";
 import { PhotoUpload } from "./PhotoUpload";
 import { PhotoLightbox } from "./PhotoLightbox";
@@ -39,10 +45,15 @@ export const ReservesList: React.FC<ReservesListProps> = ({
   artisanTokens = [],
 }) => {
   const [reserves, setReserves] = useState<Reserve[]>([]);
+  const [visits, setVisits] = useState<Visit[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
+  const [showDetailModal, setShowDetailModal] = useState<Reserve | null>(null);
+  const [statusHistory, setStatusHistory] = useState<ReserveStatusHistory[]>([]);
   const [statusFilter, setStatusFilter] = useState<ReserveStatus | "all">("all");
   const [priorityFilter, setPriorityFilter] = useState<ReservePriority | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "observation" | "remarque">("all");
+  const [visitFilter, setVisitFilter] = useState<string>("all");
   const [lightboxPhoto, setLightboxPhoto] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -51,10 +62,33 @@ export const ReservesList: React.FC<ReservesListProps> = ({
     description: "",
     assigned_to: "",
     priority: "medium" as ReservePriority,
+    type: "observation" as "observation" | "remarque",
+    chapter: "",
+    sub_chapter: "",
+    visit_id: "",
   });
   const [reservePhoto, setReservePhoto] = useState<File | null>(null);
 
   const supabase = createClient();
+
+  const fetchVisits = useCallback(async () => {
+    if (isDemo) {
+      setVisits([]);
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from("visits")
+        .select("id, date, object, project_id, user_id, phase, zone, notes, created_at")
+        .eq("project_id", projectId)
+        .order("date", { ascending: false });
+
+      setVisits(data || []);
+    } catch (error) {
+      console.error("Error fetching visits:", error);
+    }
+  }, [projectId, isDemo, supabase]);
 
   const fetchReserves = useCallback(async () => {
     if (isDemo) {
@@ -68,17 +102,27 @@ export const ReservesList: React.FC<ReservesListProps> = ({
           photo_url: null,
           assigned_to: "Jean Dupont",
           priority: "medium",
-          status: "open",
+          status: "urgent",
           created_at: "2024-03-15T10:00:00Z",
           resolved_at: null,
           resolution_photo_url: null,
           resolution_notes: null,
+          // MODULE 2 - nouveaux champs
+          visit_id: null,
+          number: "R-001",
+          type: "observation",
+          chapter: null,
+          sub_chapter: null,
+          plan_id: null,
+          plan_x: null,
+          plan_y: null,
+          resolved_note: null,
         },
         {
           id: "demo-reserve-2",
           project_id: projectId,
-          title: "Rayure carrelage",
-          description: "Rayure visible sur le carrelage de la cuisine",
+          title: "Point réunion carrelage",
+          description: "Carrelage non conforme aux spécifications techniques",
           photo_url: null,
           assigned_to: "Marie Martin",
           priority: "low",
@@ -87,6 +131,16 @@ export const ReservesList: React.FC<ReservesListProps> = ({
           resolved_at: "2024-03-12T14:30:00Z",
           resolution_photo_url: null,
           resolution_notes: "Carrelage remplacé",
+          // MODULE 2 - nouveaux champs
+          visit_id: null,
+          number: "R-002",
+          type: "remarque",
+          chapter: "Sol - Revêtements",
+          sub_chapter: "Carrelage cuisine",
+          plan_id: null,
+          plan_x: null,
+          plan_y: null,
+          resolved_note: "Solution trouvée en réunion",
         },
       ]);
       setLoading(false);
@@ -111,11 +165,47 @@ export const ReservesList: React.FC<ReservesListProps> = ({
 
   useEffect(() => {
     fetchReserves();
-  }, [fetchReserves]);
+    fetchVisits();
+  }, [fetchReserves, fetchVisits]);
 
   const handlePhotoUpload = async (files: File[]) => {
     if (files.length > 0) {
       setReservePhoto(files[0]);
+    }
+  };
+
+  const calculateReserveNumber = async (): Promise<string> => {
+    if (isDemo) return `R-${String(reserves.length + 1).padStart(3, '0')}`;
+
+    try {
+      const { data } = await supabase
+        .from("reserves")
+        .select("id")
+        .eq("project_id", projectId)
+        .order("created_at", { ascending: true });
+
+      const nextNumber = (data?.length || 0) + 1;
+      return `R-${String(nextNumber).padStart(3, '0')}`;
+    } catch (error) {
+      console.error("Error calculating reserve number:", error);
+      return `R-${String(Date.now()).slice(-3)}`;
+    }
+  };
+
+  const insertStatusHistory = async (reserveId: string, status: ReserveStatus) => {
+    if (isDemo) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      await supabase.from('reserve_status_history').insert({
+        reserve_id: reserveId,
+        status: status,
+        note: null,
+        changed_by: user?.id || null
+      });
+    } catch (error) {
+      console.error("Error inserting status history:", error);
     }
   };
 
@@ -152,6 +242,9 @@ export const ReservesList: React.FC<ReservesListProps> = ({
         photoUrl = await uploadPhoto(reservePhoto);
       }
 
+      // Calcul automatique du numéro
+      const reserveNumber = await calculateReserveNumber();
+
       const { data, error } = await supabase
         .from("reserves")
         .insert({
@@ -160,7 +253,14 @@ export const ReservesList: React.FC<ReservesListProps> = ({
           description: newReserve.description.trim() || null,
           assigned_to: newReserve.assigned_to.trim() || null,
           priority: newReserve.priority,
+          status: "open",
           photo_url: photoUrl,
+          // MODULE 2 - nouveaux champs
+          number: reserveNumber,
+          type: newReserve.type,
+          chapter: newReserve.type === "remarque" ? (newReserve.chapter.trim() || null) : null,
+          sub_chapter: newReserve.type === "remarque" ? (newReserve.sub_chapter.trim() || null) : null,
+          visit_id: newReserve.visit_id || null,
         })
         .select()
         .single();
@@ -168,28 +268,38 @@ export const ReservesList: React.FC<ReservesListProps> = ({
       if (error) throw error;
 
       if (data) {
+        // Insert initial status history
+        await insertStatusHistory(data.id, "open");
+
         setReserves([data, ...reserves]);
         setNewReserve({
           title: "",
           description: "",
           assigned_to: "",
           priority: "medium",
+          type: "observation",
+          chapter: "",
+          sub_chapter: "",
+          visit_id: "",
         });
         setReservePhoto(null);
         setShowForm(false);
 
         // Log to activity feed
         try {
+          const { data: { user } } = await supabase.auth.getUser();
           await supabase.from('activity_feed').insert({
             project_id: projectId,
-            project_name: projectName || 'Projet',
+            project_name: projectName || null,
             type: 'reserve_opened',
-            actor_name: 'Architecte',
+            actor_name: user?.email ?? 'Architecte',
             actor_type: 'architect',
-            description: `Réserve ouverte : "${data.title}"`
+            description: `Réserve ${reserveNumber} ouverte : "${data.title}"`,
+            entity_id: data.id,
+            entity_type: 'reserve'
           });
         } catch (err) {
-          console.error('Error logging activity:', err);
+          console.error('Error logging activity_feed:', err);
         }
       }
     } catch (error) {
@@ -216,12 +326,38 @@ export const ReservesList: React.FC<ReservesListProps> = ({
     }
 
     try {
+      const updateData: any = { status };
+      if (status === "resolved") {
+        updateData.resolved_at = new Date().toISOString();
+      }
+
       const { error } = await supabase
         .from("reserves")
-        .update({ status })
+        .update(updateData)
         .eq("id", reserveId);
 
       if (error) throw error;
+
+      // Insert status history
+      await insertStatusHistory(reserveId, status);
+
+      // Log status change to activity feed
+      try {
+        const reserve = reserves.find(r => r.id === reserveId);
+        const { data: { user } } = await supabase.auth.getUser();
+        await supabase.from('activity_feed').insert({
+          project_id: projectId,
+          project_name: projectName || null,
+          type: 'reserve_status_changed',
+          actor_name: user?.email ?? 'Architecte',
+          actor_type: 'architect',
+          description: `Réserve ${reserve?.number || ''} : statut → ${RESERVE_STATUS_LABELS[status]}`,
+          entity_id: reserveId,
+          entity_type: 'reserve'
+        });
+      } catch (err) {
+        console.error('Error logging activity_feed:', err);
+      }
 
       setReserves((prev) =>
         prev.map((r) => (r.id === reserveId ? { ...r, status } : r))
@@ -248,22 +384,77 @@ export const ReservesList: React.FC<ReservesListProps> = ({
     }
   };
 
+  const fetchStatusHistory = async (reserveId: string) => {
+    if (isDemo) {
+      setStatusHistory([]);
+      return;
+    }
+
+    try {
+      const { data } = await supabase
+        .from("reserve_status_history")
+        .select("*")
+        .eq("reserve_id", reserveId)
+        .order("changed_at", { ascending: false });
+
+      setStatusHistory(data || []);
+    } catch (error) {
+      console.error("Error fetching status history:", error);
+      setStatusHistory([]);
+    }
+  };
+
+  const openDetailModal = async (reserve: Reserve) => {
+    setShowDetailModal(reserve);
+    await fetchStatusHistory(reserve.id);
+  };
+
   const getStatusIcon = (status: ReserveStatus) => {
     switch (status) {
       case "resolved":
+      case "acte":
         return <CheckCircle2 className="h-4 w-4" />;
       case "in_progress":
+      case "programme":
         return <Clock className="h-4 w-4" />;
+      case "urgent":
+      case "en_retard":
+        return <AlertTriangle className="h-4 w-4" />;
       case "open":
+      case "a_surveiller":
+      case "en_attente":
+      case "clos":
+      default:
         return <AlertTriangle className="h-4 w-4" />;
     }
+  };
+
+  const getTypeIcon = (type: "observation" | "remarque" | null) => {
+    if (type === "remarque") {
+      return <FileText className="h-4 w-4" />;
+    }
+    return <MapPin className="h-4 w-4" />;
   };
 
   const filteredReserves = reserves.filter((reserve) => {
     const statusMatch = statusFilter === "all" || reserve.status === statusFilter;
     const priorityMatch = priorityFilter === "all" || reserve.priority === priorityFilter;
-    return statusMatch && priorityMatch;
+    const typeMatch = typeFilter === "all" ||
+      (typeFilter === "observation" && (reserve.type === "observation" || !reserve.type)) ||
+      (typeFilter === "remarque" && reserve.type === "remarque");
+    const visitMatch = visitFilter === "all" ||
+      (visitFilter === "none" && !reserve.visit_id) ||
+      reserve.visit_id === visitFilter;
+
+    return statusMatch && priorityMatch && typeMatch && visitMatch;
   });
+
+  const clearFilters = () => {
+    setStatusFilter("all");
+    setPriorityFilter("all");
+    setTypeFilter("all");
+    setVisitFilter("all");
+  };
 
   const getArtisanNames = () => {
     const names = new Set(artisanTokens.map(token => token.artisan_name));
@@ -305,9 +496,38 @@ export const ReservesList: React.FC<ReservesListProps> = ({
           className="rounded-md border bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
         >
           <option value="all">Tous les statuts</option>
-          <option value="open">Ouvertes</option>
+          <option value="open">Ouvert</option>
+          <option value="urgent">Urgent</option>
+          <option value="en_retard">En retard</option>
+          <option value="a_surveiller">À surveiller</option>
+          <option value="en_attente">En attente</option>
+          <option value="programme">Programmé</option>
           <option value="in_progress">En cours</option>
-          <option value="resolved">Résolues</option>
+          <option value="acte">Acté</option>
+          <option value="resolved">Levé</option>
+          <option value="clos">Clôturé</option>
+        </select>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as "all" | "observation" | "remarque")}
+          className="rounded-md border bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+        >
+          <option value="all">Tous types</option>
+          <option value="observation">Observations</option>
+          <option value="remarque">Remarques</option>
+        </select>
+        <select
+          value={visitFilter}
+          onChange={(e) => setVisitFilter(e.target.value)}
+          className="rounded-md border bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+        >
+          <option value="all">Toutes les visites</option>
+          <option value="none">Aucune visite</option>
+          {visits.map((visit) => (
+            <option key={visit.id} value={visit.id}>
+              {new Date(visit.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} — {visit.object}
+            </option>
+          ))}
         </select>
         <select
           value={priorityFilter}
@@ -320,6 +540,12 @@ export const ReservesList: React.FC<ReservesListProps> = ({
           <option value="medium">Moyenne</option>
           <option value="low">Faible</option>
         </select>
+        <button
+          onClick={clearFilters}
+          className="rounded-md border px-2 py-1 text-xs hover:bg-accent transition-colors"
+        >
+          Effacer
+        </button>
       </div>
 
       {/* New Reserve Form */}
@@ -341,7 +567,15 @@ export const ReservesList: React.FC<ReservesListProps> = ({
               rows={2}
               className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm resize-none focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
             />
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-3">
+              <select
+                value={newReserve.type}
+                onChange={(e) => setNewReserve({ ...newReserve, type: e.target.value as "observation" | "remarque" })}
+                className="rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              >
+                <option value="observation">📍 Observation</option>
+                <option value="remarque">📝 Remarque</option>
+              </select>
               <select
                 value={newReserve.priority}
                 onChange={(e) => setNewReserve({ ...newReserve, priority: e.target.value as ReservePriority })}
@@ -375,6 +609,49 @@ export const ReservesList: React.FC<ReservesListProps> = ({
                 />
               )}
             </div>
+
+            {/* Visite associée */}
+            <div>
+              <label className="block text-sm font-medium mb-1">Visite associée (optionnelle)</label>
+              <select
+                value={newReserve.visit_id}
+                onChange={(e) => setNewReserve({ ...newReserve, visit_id: e.target.value })}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+              >
+                <option value="">Aucune visite</option>
+                {visits.map((visit) => (
+                  <option key={visit.id} value={visit.id}>
+                    {new Date(visit.date).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })} — {visit.object}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Champs pour remarques */}
+            {newReserve.type === "remarque" && (
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Chapitre</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Sol - Revêtements"
+                    value={newReserve.chapter}
+                    onChange={(e) => setNewReserve({ ...newReserve, chapter: e.target.value })}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Sous-chapitre</label>
+                  <input
+                    type="text"
+                    placeholder="Ex: Carrelage cuisine"
+                    value={newReserve.sub_chapter}
+                    onChange={(e) => setNewReserve({ ...newReserve, sub_chapter: e.target.value })}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
+                  />
+                </div>
+              </div>
+            )}
 
             {!isDemo && (
               <div>
@@ -426,6 +703,12 @@ export const ReservesList: React.FC<ReservesListProps> = ({
               <div className="flex items-start justify-between mb-2">
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
+                    {reserve.number && (
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">
+                        {reserve.number}
+                      </span>
+                    )}
+                    {getTypeIcon(reserve.type)}
                     <div
                       className="h-2 w-2 rounded-full"
                       style={{ backgroundColor: RESERVE_PRIORITY_COLORS[reserve.priority] }}
@@ -454,6 +737,13 @@ export const ReservesList: React.FC<ReservesListProps> = ({
                       <span>Résolue le {new Date(reserve.resolved_at).toLocaleDateString("fr-FR")}</span>
                     )}
                   </div>
+                  {reserve.type === "remarque" && (reserve.chapter || reserve.sub_chapter) && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {reserve.chapter && <span className="font-medium">{reserve.chapter}</span>}
+                      {reserve.chapter && reserve.sub_chapter && " › "}
+                      {reserve.sub_chapter && <span>{reserve.sub_chapter}</span>}
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -468,6 +758,13 @@ export const ReservesList: React.FC<ReservesListProps> = ({
                     {getStatusIcon(reserve.status)}
                     {RESERVE_STATUS_LABELS[reserve.status]}
                   </span>
+                  <button
+                    onClick={() => openDetailModal(reserve)}
+                    className="inline-flex items-center justify-center rounded-md h-6 w-6 text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+                    title="Voir détails et historique"
+                  >
+                    <Eye className="h-3 w-3" />
+                  </button>
                   {!isDemo && (
                     <button
                       onClick={() => deleteReserve(reserve.id)}
@@ -495,16 +792,23 @@ export const ReservesList: React.FC<ReservesListProps> = ({
                 </div>
               )}
 
-              {reserve.status !== "resolved" && (
+              {reserve.status !== "resolved" && reserve.status !== "clos" && (
                 <div className="flex gap-1">
                   <select
                     value={reserve.status}
                     onChange={(e) => updateReserveStatus(reserve.id, e.target.value as ReserveStatus)}
                     className="rounded-md border bg-background px-2 py-1 text-xs shadow-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1"
                   >
-                    <option value="open">Ouverte</option>
+                    <option value="open">Ouvert</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="en_retard">En retard</option>
+                    <option value="a_surveiller">À surveiller</option>
+                    <option value="en_attente">En attente</option>
+                    <option value="programme">Programmé</option>
                     <option value="in_progress">En cours</option>
-                    <option value="resolved">Résolue</option>
+                    <option value="acte">Acté</option>
+                    <option value="resolved">Levé</option>
+                    <option value="clos">Clôturé</option>
                   </select>
                 </div>
               )}
@@ -520,6 +824,166 @@ export const ReservesList: React.FC<ReservesListProps> = ({
           ))
         )}
       </div>
+
+      {/* Detail Modal */}
+      {showDetailModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-background rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              {/* Header */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  {showDetailModal.number && (
+                    <span className="inline-flex items-center px-2 py-1 rounded text-sm font-medium bg-gray-100 text-gray-800">
+                      {showDetailModal.number}
+                    </span>
+                  )}
+                  {getTypeIcon(showDetailModal.type)}
+                  <h2 className="text-lg font-semibold">{showDetailModal.title}</h2>
+                </div>
+                <button
+                  onClick={() => setShowDetailModal(null)}
+                  className="text-muted-foreground hover:text-foreground"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* Status Badge */}
+              <div className="mb-4">
+                <span
+                  className="inline-flex items-center gap-2 rounded-md px-3 py-1 text-sm font-medium ring-1 ring-inset"
+                  style={{
+                    backgroundColor: RESERVE_STATUS_COLORS[showDetailModal.status] + "20",
+                    color: RESERVE_STATUS_COLORS[showDetailModal.status],
+                    borderColor: RESERVE_STATUS_COLORS[showDetailModal.status] + "30",
+                  }}
+                >
+                  {getStatusIcon(showDetailModal.status)}
+                  {RESERVE_STATUS_LABELS[showDetailModal.status]}
+                </span>
+              </div>
+
+              {/* Description */}
+              {showDetailModal.description && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-1">Description</h3>
+                  <p className="text-sm text-muted-foreground">{showDetailModal.description}</p>
+                </div>
+              )}
+
+              {/* Chapter/Sub-chapter */}
+              {showDetailModal.type === "remarque" && (showDetailModal.chapter || showDetailModal.sub_chapter) && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-1">Classification</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {showDetailModal.chapter && <span className="font-medium">{showDetailModal.chapter}</span>}
+                    {showDetailModal.chapter && showDetailModal.sub_chapter && " › "}
+                    {showDetailModal.sub_chapter && <span>{showDetailModal.sub_chapter}</span>}
+                  </p>
+                </div>
+              )}
+
+              {/* Assigned to */}
+              {showDetailModal.assigned_to && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-1">Assigné à</h3>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    {showDetailModal.assigned_to}
+                  </p>
+                </div>
+              )}
+
+              {/* Visit association */}
+              {showDetailModal.visit_id && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-1">Visite associée</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {visits.find(v => v.id === showDetailModal.visit_id)?.object || 'Visite non trouvée'}
+                  </p>
+                </div>
+              )}
+
+              {/* Dates */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <h3 className="text-sm font-medium mb-1">Date de création</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {new Date(showDetailModal.created_at).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric"
+                    })}
+                  </p>
+                </div>
+                {showDetailModal.resolved_at && (
+                  <div>
+                    <h3 className="text-sm font-medium mb-1">Date de résolution</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {new Date(showDetailModal.resolved_at).toLocaleDateString("fr-FR", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric"
+                      })}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Status History */}
+              <div className="mb-4">
+                <h3 className="text-sm font-medium mb-2 flex items-center gap-1">
+                  <History className="h-4 w-4" />
+                  Historique des statuts
+                </h3>
+                {statusHistory.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Aucun historique disponible</p>
+                ) : (
+                  <div className="space-y-2">
+                    {statusHistory.map((history) => (
+                      <div key={history.id} className="flex items-center gap-2 text-xs">
+                        <span className="text-muted-foreground">
+                          {new Date(history.changed_at).toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                          {" "}
+                          {new Date(history.changed_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                        <span
+                          className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium"
+                          style={{
+                            backgroundColor: RESERVE_STATUS_COLORS[history.status] + "20",
+                            color: RESERVE_STATUS_COLORS[history.status],
+                          }}
+                        >
+                          {RESERVE_STATUS_LABELS[history.status]}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Resolution notes */}
+              {showDetailModal.resolution_notes && (
+                <div className="mb-4">
+                  <h3 className="text-sm font-medium mb-1">Notes de résolution</h3>
+                  <p className="text-sm text-muted-foreground">{showDetailModal.resolution_notes}</p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex justify-end">
+                <button
+                  onClick={() => setShowDetailModal(null)}
+                  className="rounded-md border px-4 py-2 text-sm font-medium hover:bg-accent transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Photo Lightbox */}
       {lightboxPhoto && (
