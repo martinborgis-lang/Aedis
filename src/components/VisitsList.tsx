@@ -23,7 +23,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -50,8 +50,8 @@ export const VisitsList: React.FC<VisitsListProps> = ({
 }) => {
   const [visits, setVisits] = useState<VisitWithAttendees[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showDialog, setShowDialog] = useState(false);
-  const [showDetailDialog, setShowDetailDialog] = useState(false);
+  const [showSheet, setShowSheet] = useState(false);
+  const [showDetailSheet, setShowDetailSheet] = useState(false);
   const [selectedVisit, setSelectedVisit] = useState<VisitWithAttendees | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -161,7 +161,7 @@ export const VisitsList: React.FC<VisitsListProps> = ({
     resetForm();
     setIsEditing(false);
     setSelectedVisit(null);
-    setShowDialog(true);
+    setShowSheet(true);
   };
 
   const openEditDialog = (visit: VisitWithAttendees) => {
@@ -181,12 +181,12 @@ export const VisitsList: React.FC<VisitsListProps> = ({
     })));
     setSelectedVisit(visit);
     setIsEditing(true);
-    setShowDialog(true);
+    setShowSheet(true);
   };
 
   const openDetailDialog = (visit: VisitWithAttendees) => {
     setSelectedVisit(visit);
-    setShowDetailDialog(true);
+    setShowDetailSheet(true);
   };
 
   const addAttendee = () => {
@@ -242,9 +242,12 @@ export const VisitsList: React.FC<VisitsListProps> = ({
 
     setSaving(true);
     try {
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+
       const visitData = {
         project_id: projectId,
-        user_id: "user-id", // TODO: get from auth
+        user_id: user?.id ?? null,
         date: newVisit.date,
         object: newVisit.object.trim(),
         phase: newVisit.phase,
@@ -317,7 +320,7 @@ export const VisitsList: React.FC<VisitsListProps> = ({
       }
 
       await fetchVisits();
-      setShowDialog(false);
+      setShowSheet(false);
       resetForm();
     } catch (error) {
       console.error("Error saving visit:", error);
@@ -345,7 +348,7 @@ export const VisitsList: React.FC<VisitsListProps> = ({
       if (error) throw error;
 
       await fetchVisits();
-      setShowDetailDialog(false);
+      setShowDetailSheet(false);
     } catch (error) {
       console.error("Error deleting visit:", error);
     }
@@ -468,17 +471,17 @@ export const VisitsList: React.FC<VisitsListProps> = ({
         )}
       </div>
 
-      {/* Create/Edit Dialog */}
-      <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>
+      {/* Create/Edit Sheet */}
+      <Sheet open={showSheet} onOpenChange={setShowSheet}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle>
               {isEditing ? "Modifier la visite" : "Nouvelle visite"}
-            </DialogTitle>
-            <DialogDescription>
+            </SheetTitle>
+            <SheetDescription>
               {isEditing ? "Modifiez les détails de la visite" : "Créez une nouvelle visite de chantier"}
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
 
           <div className="space-y-6">
             {/* Visit Details */}
@@ -657,7 +660,7 @@ export const VisitsList: React.FC<VisitsListProps> = ({
 
             {/* Actions */}
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setShowDialog(false)}>
+              <Button variant="outline" onClick={() => setShowSheet(false)}>
                 Annuler
               </Button>
               <Button
@@ -669,21 +672,21 @@ export const VisitsList: React.FC<VisitsListProps> = ({
               </Button>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
-      {/* Detail Dialog */}
-      <Dialog open={showDetailDialog} onOpenChange={setShowDetailDialog}>
-        <DialogContent className="max-w-3xl">
+      {/* Detail Sheet */}
+      <Sheet open={showDetailSheet} onOpenChange={setShowDetailSheet}>
+        <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
           {selectedVisit && (
             <>
-              <DialogHeader>
+              <SheetHeader>
                 <div className="flex items-start justify-between">
                   <div>
-                    <DialogTitle>{selectedVisit.object}</DialogTitle>
-                    <DialogDescription>
+                    <SheetTitle>{selectedVisit.object}</SheetTitle>
+                    <SheetDescription>
                       {formatDate(selectedVisit.date)}
-                    </DialogDescription>
+                    </SheetDescription>
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge
@@ -698,7 +701,7 @@ export const VisitsList: React.FC<VisitsListProps> = ({
                     </Badge>
                   </div>
                 </div>
-              </DialogHeader>
+              </SheetHeader>
 
               <div className="space-y-6">
                 {selectedVisit.zone && (
@@ -764,12 +767,12 @@ export const VisitsList: React.FC<VisitsListProps> = ({
                     Supprimer
                   </Button>
                   <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setShowDetailDialog(false)}>
+                    <Button variant="outline" onClick={() => setShowDetailSheet(false)}>
                       Fermer
                     </Button>
                     <Button
                       onClick={() => {
-                        setShowDetailDialog(false);
+                        setShowDetailSheet(false);
                         openEditDialog(selectedVisit);
                       }}
                       className="bg-accent hover:bg-accent/90"
@@ -782,8 +785,8 @@ export const VisitsList: React.FC<VisitsListProps> = ({
               </div>
             </>
           )}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

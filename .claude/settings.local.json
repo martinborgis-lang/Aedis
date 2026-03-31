@@ -16,7 +16,11 @@
       "Bash(taskkill /F /IM node.exe)",
       "Bash(npm cache clean --force)",
       "Bash(npm run lint)",
-      "Bash(git add .)"
+      "Bash(git add .)",
+      "Bash(git commit -m \"feat: système de visites de chantier complet - Module 1\n\n🎯 FONCTIONNALITÉS IMPLÉMENTÉES:\n• Nouvel onglet ''Visites'' dans /projects/[id] avec icône CalendarCheck\n• CRUD complet : Create, Read, Update, Delete visites\n• Gestion participants avec statuts (Présent/Absent/Excusé/Absent NE/Convoqué)\n• Dialog création/édition avec formulaire complet\n• Vue détail en modal avec résumé présences\n• Pré-remplissage participants depuis artisans projet\n\n📊 TYPES & DATABASE:\n• Nouveaux types: Visit, VisitAttendee, VisitPhase, AttendeeStatus  \n• Couleurs métier: phases (Suivi=bleu, OPR=orange, Réception=vert, Livraison=violet)\n• Badges présences: Présent=vert, Absent=rouge, Excusé=orange, etc.\n• Tables visits & visit_attendees avec relations FK\n\n🔧 COMPOSANTS:\n• VisitsList.tsx: Composant principal avec liste, dialogs, CRUD\n• Table.tsx shadcn/ui: Ajouté automatiquement pour tableau participants\n• Integration parfaite avec système existant (ReservesList pattern)\n\n⚡ ACTIVITY FEED:\n• Insertion automatique ''visit_created'' dans activity_feed\n• Suivi des actions architecte pour monitoring\n\n✅ PRODUCTION READY:\n• Build vérifié sans erreurs TypeScript\n• Demo data intégrée pour tests\n• Interface responsive mobile\n• Respect conventions Aedis existantes\n\n🎯 RÉSULTAT: \nBloqueur migration Archireport/Archipad levé - Les architectes peuvent \nmaintenant gérer leurs visites de chantier comme sur la concurrence.\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)\n\nCo-Authored-By: Claude <noreply@anthropic.com>\")",
+      "Bash(git push origin main)",
+      "Bash(npx shadcn@latest add sheet)",
+      "Bash(npx shadcn@latest add sheet --overwrite=false)"
     ],
     "deny": [],
     "ask": []
