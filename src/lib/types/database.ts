@@ -2,6 +2,8 @@ export type ProjectStatus = "active" | "completed" | "archived";
 export type TaskStatus = "pending" | "in_progress" | "completed";
 export type ReservePriority = "low" | "medium" | "high" | "critical";
 export type ReserveStatus = "open" | "in_progress" | "resolved";
+export type VisitPhase = "suivi" | "opr" | "reception" | "livraison";
+export type AttendeeStatus = "present" | "absent" | "excuse" | "absent_non_excuse" | "convoque";
 
 export interface Project {
   id: string;
@@ -104,6 +106,36 @@ export const RESERVE_STATUS_LABELS: Record<ReserveStatus, string> = {
   resolved: "Résolue",
 };
 
+export const VISIT_PHASE_LABELS: Record<VisitPhase, string> = {
+  suivi: "Suivi de chantier",
+  opr: "OPR",
+  reception: "Réception",
+  livraison: "Livraison",
+};
+
+export const VISIT_PHASE_COLORS: Record<VisitPhase, string> = {
+  suivi: "#3b82f6",
+  opr: "#f59e0b",
+  reception: "#10b981",
+  livraison: "#8b5cf6",
+};
+
+export const ATTENDEE_STATUS_LABELS: Record<AttendeeStatus, string> = {
+  present: "Présent",
+  absent: "Absent",
+  excuse: "Excusé",
+  absent_non_excuse: "Absent non excusé",
+  convoque: "Convoqué",
+};
+
+export const ATTENDEE_STATUS_COLORS: Record<AttendeeStatus, string> = {
+  present: "#10b981",
+  absent: "#ef4444",
+  excuse: "#f59e0b",
+  absent_non_excuse: "#dc2626",
+  convoque: "#6b7280",
+};
+
 export interface Task {
   id: string;
   project_id: string;
@@ -163,6 +195,29 @@ export interface Report {
   created_at: string;
 }
 
+export interface Visit {
+  id: string;
+  project_id: string;
+  user_id: string;
+  date: string;
+  object: string;
+  phase: VisitPhase;
+  zone: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface VisitAttendee {
+  id: string;
+  visit_id: string;
+  name: string;
+  company: string | null;
+  role: string | null;
+  status: AttendeeStatus;
+  penalty: boolean;
+  created_at: string;
+}
+
 export type Database = {
   public: {
     Tables: {
@@ -195,6 +250,16 @@ export type Database = {
         Row: Report;
         Insert: Omit<Report, "id" | "created_at">;
         Update: Partial<Omit<Report, "id" | "created_at">>;
+      };
+      visits: {
+        Row: Visit;
+        Insert: Omit<Visit, "id" | "created_at">;
+        Update: Partial<Omit<Visit, "id" | "created_at">>;
+      };
+      visit_attendees: {
+        Row: VisitAttendee;
+        Insert: Omit<VisitAttendee, "id" | "created_at">;
+        Update: Partial<Omit<VisitAttendee, "id" | "created_at">>;
       };
     };
     Views: Record<string, never>;

@@ -6,7 +6,7 @@ const loadPDFGenerator = () => import("@/components/ProjectPDFReport").then(m =>
 import { useState, useEffect, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2, Camera, Copy, Check, ExternalLink, Settings, CalendarDays, Wrench, Link2, Pencil, X, FileText, Download, Box, Euro, Edit3, FolderOpen, Mail } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, Camera, Copy, Check, ExternalLink, Settings, CalendarDays, CalendarCheck, Wrench, Link2, Pencil, X, FileText, Download, Box, Euro, Edit3, FolderOpen, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,6 +16,7 @@ import { PhotoUpload } from "@/components/PhotoUpload";
 import { PhotoLightbox } from "@/components/PhotoLightbox";
 import { PhotoThumbnailGrid } from "@/components/PhotoThumbnailGrid";
 import { ReservesList } from "@/components/ReservesList";
+import { VisitsList } from "@/components/VisitsList";
 import PascalViewer from "@/components/PascalViewer";
 import ModelUpload from "@/components/ModelUpload";
 import ReminderHistory from "@/components/ReminderHistory";
@@ -133,7 +134,7 @@ export default function ProjectDetailPage() {
   const [saving, setSaving] = useState(false);
   const [reports, setReports] = useState<Report[]>([]);
   const [generatingPDF, setGeneratingPDF] = useState(false);
-  const [activeTab, setActiveTab] = useState<"projet" | "reserves" | "rapports" | "model" | "budget" | "documents" | "rappels">("projet");
+  const [activeTab, setActiveTab] = useState<"projet" | "visites" | "reserves" | "rapports" | "model" | "budget" | "documents" | "rappels">("projet");
   const [reportNotes, setReportNotes] = useState("");
   const [modelUrl, setModelUrl] = useState<string | null>(null);
   const [editingBudget, setEditingBudget] = useState<string | null>(null);
@@ -1066,6 +1067,17 @@ export default function ProjectDetailPage() {
             Projet
           </button>
           <button
+            onClick={() => setActiveTab('visites')}
+            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+              activeTab === 'visites'
+                ? 'border-orange-500 text-orange-600'
+                : 'border-transparent text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <CalendarCheck className="h-4 w-4 inline mr-1" />
+            Visites
+          </button>
+          <button
             onClick={() => setActiveTab('reserves')}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
               activeTab === 'reserves'
@@ -1464,6 +1476,17 @@ export default function ProjectDetailPage() {
             )}
           </div>
         )}
+          </div>
+        )}
+
+        {activeTab === 'visites' && (
+          <div className="space-y-6">
+            <VisitsList
+              projectId={project.id}
+              projectName={project.name}
+              isDemo={isDemo}
+              artisanTokens={Object.values(artisanTokens).flat()}
+            />
           </div>
         )}
 

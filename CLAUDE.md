@@ -2,17 +2,25 @@
 
 ## 1. PROJECT OVERVIEW
 
-**Aedis** is a SaaS platform for French architects to manage construction project workflows. It implements a 3-layer access model:
+**Aedis** is a comprehensive SaaS platform for French architects to manage construction project workflows with advanced automation. It implements a 3-layer access model with cutting-edge features:
 
-1. **Architect Layer (Authenticated)**: Full project management, task creation, progress tracking, Gantt charts
-2. **Client Layer (Token-based)**: Read-only portal to view project progress, photos, timeline
-3. **Artisan Layer (Per-task tokens)**: Task-specific access to mark tasks done and upload photos
+1. **Architect Layer (Authenticated)**: Full project management, AI-powered DPGF import, PDF reports, reserves management, activity monitoring
+2. **Client Layer (Token-based)**: Real-time portal with progress tracking, photo galleries, interactive timeline
+3. **Artisan Layer (Per-task tokens)**: Task-specific access with photo upload, progress confirmation, automated notifications
 
 ### Target Market
-- French architecture firms
-- Construction project management
-- Client transparency and communication
-- Artisan coordination and progress tracking
+- French architecture firms seeking digital transformation
+- Construction project management with client transparency
+- Artisan coordination with automated workflow
+- Professional reporting and quality control (reserves)
+
+### Key Differentiators
+- **AI-powered DPGF import**: Automatic project setup from PDF documents
+- **Professional PDF reporting**: Branded, detailed project reports
+- **Reserves management**: Complete defect tracking system
+- **Email automation**: Brevo integration for professional communication
+- **3D visualization**: Pascal.app integration for model viewing
+- **Immersive landing page**: Three.js blueprint animation
 
 ## 2. ARCHITECTURE
 
@@ -22,123 +30,444 @@ src/
 ├── app/                     # Next.js 14 App Router pages
 │   ├── (auth)/
 │   │   ├── auth/           # Authentication pages
-│   │   └── dashboard/      # Architect dashboard
+│   │   └── dashboard/      # Architect dashboard with activity feed
+│   ├── api/                # API routes
+│   │   ├── projects/
+│   │   │   └── import-dpgf/ # AI-powered DPGF import endpoints
+│   │   ├── reports/        # PDF report generation & tracking
+│   │   ├── reminders/      # Email notification system
+│   │   ├── subscribe/      # Landing page email capture
+│   │   └── cron/           # Scheduled tasks (reminder automation)
 │   ├── portal/[token]/     # Client portal (token-based access)
 │   ├── artisan/[token]/    # Artisan portal (task-specific tokens)
 │   ├── projects/
 │   │   ├── new/           # Create new project
-│   │   ├── [id]/          # Project detail view
+│   │   ├── import/        # DPGF import workflow
+│   │   │   └── preview/   # Import preview & validation
+│   │   ├── [id]/          # Project detail view with reserves
 │   │   └── [id]/planning/ # Gantt chart planning view
-│   └── globals.css        # Global Tailwind styles
-├── components/             # Shared React components
+│   ├── page.tsx           # Immersive landing page with Three.js
+│   └── globals.css        # Global styles + animations + theme system
+├── components/             # Comprehensive React component library
+│   ├── ui/                # shadcn/ui design system
+│   │   ├── button.tsx     # Consistent button components
+│   │   ├── card.tsx       # Card containers
+│   │   ├── dialog.tsx     # Modal dialogs
+│   │   ├── input.tsx      # Form inputs
+│   │   ├── select.tsx     # Dropdown selects
+│   │   └── ...           # Complete UI component system
 │   ├── GanttChart.tsx     # Frappe-gantt wrapper
 │   ├── PhotoUpload.tsx    # File upload with drag-drop
 │   ├── PhotoLightbox.tsx  # Photo viewer modal
-│   └── StatusBadge.tsx    # Task/project status indicators
+│   ├── StatusBadge.tsx    # Task/project status indicators
+│   ├── ProjectPDFReport.tsx  # Professional PDF report generation
+│   ├── ReservesList.tsx   # Complete reserves management system
+│   ├── ActivityFeed.tsx   # Real-time activity monitoring
+│   ├── ImportUploadZone.tsx # AI-powered DPGF import interface
+│   ├── PascalViewer.tsx   # 3D model viewer integration
+│   ├── BlueprintAnimation.tsx # Complex Three.js house animation
+│   ├── AnimatedCard.tsx   # Scroll-triggered card animations
+│   ├── AnimatedStat.tsx   # Counter animations with easing
+│   ├── AnimatedTitle.tsx  # Title slide animations
+│   ├── MiniGanttDemo.tsx  # Interactive Gantt chart demo
+│   └── ReminderHistory.tsx # Email reminder tracking
+├── hooks/
+│   └── useScrollAnimation.ts # Intersection Observer animation hook
 ├── lib/
 │   ├── supabase/          # Supabase client configuration
-│   └── types/             # TypeScript type definitions
+│   ├── types/
+│   │   └── database.ts    # Complete type definitions + reserves types
+│   ├── import/            # DPGF import processing logic
+│   │   ├── types.ts       # Import-specific types
+│   │   └── calculateDates.ts # Date calculation algorithms
+│   ├── email.ts           # Brevo email service integration
+│   └── utils.ts           # Utility functions
 ├── types/                 # Third-party type declarations
 └── middleware.ts          # Supabase auth middleware
 ```
 
 ### Routing Conventions
-- `/` - Landing page with features overview
-- `/auth` - Supabase auth (login/signup)
-- `/dashboard` - Architect project list with stats
-- `/projects/new` - Create new project form
-- `/projects/[id]` - Project detail with tasks, photos, settings
-- `/projects/[id]/planning` - Full Gantt chart view
-- `/portal/[token]` - Client read-only portal
-- `/artisan/[token]` - Artisan task-specific interface
+
+**Public Routes**
+- `/` - Immersive landing page with Three.js blueprint animation, scroll animations
+- `/auth` - Supabase authentication (login/signup)
+
+**Architect Routes (Protected)**
+- `/dashboard` - Project overview with activity feed, stats, reserves summary
+- `/projects/new` - Create new project form with traditional input
+- `/projects/import/preview` - DPGF import preview with AI-extracted data validation
+- `/projects/[id]` - Comprehensive project detail: tasks, photos, reserves, settings, PDF reports
+- `/projects/[id]/planning` - Full interactive Gantt chart view
+
+**Token-based Access**
+- `/portal/[token]` - Client read-only portal with real-time progress, photo galleries
+- `/artisan/[token]` - Artisan task-specific interface with photo upload, progress confirmation
+
+**API Routes**
+- `/api/projects/import-dpgf` - AI-powered DPGF document analysis endpoint
+- `/api/projects/import-dpgf/create` - Create project from imported DPGF data
+- `/api/reports/send` - Generate and email PDF project reports
+- `/api/reports/track/[token]` - Track email open rates for reports
+- `/api/reminders/reserve` - Send reserve assignment notifications
+- `/api/cron/reminders` - Automated task overdue reminders
+- `/api/subscribe` - Landing page email subscription capture
 
 ## 3. TECHNOLOGY STACK
 
 ### Core Framework
-- **Next.js 14** with App Router
-- **TypeScript** for type safety
-- **React 18** with hooks and modern patterns
+- **Next.js 14** with App Router and API routes
+- **TypeScript** for type safety across client and server
+- **React 18** with hooks, modern patterns, and animations
 
 ### Database & Backend
 - **Supabase** (PostgreSQL + Auth + Storage + RLS)
 - Row Level Security for multi-tenant data isolation
 - Real-time subscriptions for collaborative features
+- **Additional tables**: reserves, activity_feed for enhanced functionality
 
 ### UI & Styling
-- **Tailwind CSS** with custom design system
-- **Lucide React** icons
-- **Inter** font from Google Fonts
-- Custom CSS variables for theming
+- **Tailwind CSS** with comprehensive design system and custom animations
+- **shadcn/ui** complete component library for consistent UX
+- **Lucide React** icons throughout the application
+- **Syne + Inter** font pairing for professional typography
+- CSS variables for theming with dark/light mode support
+- Custom keyframe animations for scroll-triggered effects
 
-### Specialized Libraries
+### Advanced Libraries
+- **@react-pdf/renderer** for professional PDF report generation
+- **Three.js** (r128) for complex 3D blueprint animation system
 - **frappe-gantt** for interactive Gantt charts
-- **uuid** for token generation
-- Dynamic imports for code splitting
+- **uuid** for secure token generation
+- **Brevo API** for professional email automation
+- **Pascal.app** integration for 3D model viewing
 
-### Development
-- **ESLint** with Next.js config
-- **PostCSS** for CSS processing
-- **TypeScript** strict mode
+### AI & Automation
+- **Custom AI DPGF processing** for automated project import
+- **Date calculation algorithms** for intelligent project planning
+- **Email automation system** with reminder scheduling
+- **Scroll-triggered animations** with Intersection Observer API
 
-## 4. DATABASE SCHEMA
+### Development & Quality
+- **ESLint** with Next.js config and TypeScript rules
+- **PostCSS** for advanced CSS processing
+- **TypeScript** strict mode with comprehensive type definitions
+- **Performance optimization** with dynamic imports and code splitting
 
-### Tables Overview
+## DATABASE SCHEMA — État réel au 31 mars 2026
+
+### Supabase Storage Buckets
+| Bucket    | Public | Usage                              |
+|-----------|--------|------------------------------------|
+| photos    | true   | Photos tâches et réserves          |
+| reports   | true   | Rapports PDF générés               |
+| documents | false  | Documents privés artisans          |
+| models    | true   | Modèles 3D + plans PDF (futur)     |
+
+---
+
+### Tables
 
 **projects**
-- Core project information
-- Portal token for client access
-- User association (architect ownership)
-- Status: active, completed, archived
+| Colonne           | Type         | Nullable | Défaut                  |
+|-------------------|--------------|----------|-------------------------|
+| id                | uuid         | NO       | gen_random_uuid()       |
+| name              | text         | NO       |                         |
+| address           | text         | NO       |                         |
+| client_name       | text         | NO       |                         |
+| client_email      | text         | YES      |                         |
+| client_phone      | text         | YES      |                         |
+| description       | text         | YES      |                         |
+| start_date        | date         | YES      |                         |
+| estimated_end_date| date         | YES      |                         |
+| status            | project_status (enum) | YES | 'active'             |
+| portal_token      | text         | NO       | UNIQUE                  |
+| portal_enabled    | boolean      | YES      | false                   |
+| user_id           | uuid         | NO       | FK → auth.users         |
+| budget            | numeric      | YES      |                         |
+| created_at        | timestamptz  | YES      | now()                   |
+| updated_at        | timestamptz  | YES      | now()                   |
 
 **tasks**
-- Project breakdown with Gantt data
-- Start/end dates, progress percentage
-- Status workflow: pending → in_progress → completed
-- Trade categorization and dependencies
+| Colonne        | Type           | Nullable | Défaut               |
+|----------------|----------------|----------|----------------------|
+| id             | uuid           | NO       | gen_random_uuid()    |
+| project_id     | uuid           | YES      | FK → projects        |
+| name           | text           | NO       |                      |
+| description    | text           | YES      |                      |
+| status         | task_status (enum) | YES  | 'pending'            |
+| start_date     | date           | NO       |                      |
+| end_date       | date           | NO       |                      |
+| progress       | integer        | YES      | 0                    |
+| sort_order     | integer        | YES      | 0                    |
+| trade          | text           | YES      |                      |
+| lot            | text           | YES      |                      |
+| dependencies   | uuid[]         | YES      | '{}'                 |
+| budget         | numeric        | YES      |                      |
+| budget_prevu   | numeric        | YES      | 0                    |
+| budget_depense | numeric        | YES      | 0                    |
+| assignee_id    | uuid           | YES      | FK → auth.users      |
+| created_at     | timestamptz    | YES      | now()                |
+| updated_at     | timestamptz    | YES      | now()                |
 
 **photos**
-- Task-associated image storage
-- Supabase storage integration
-- Upload metadata (who, when, caption)
+| Colonne     | Type        | Nullable | Défaut            |
+|-------------|-------------|----------|-------------------|
+| id          | uuid        | NO       | gen_random_uuid() |
+| task_id     | uuid        | YES      | FK → tasks        |
+| project_id  | uuid        | YES      | FK → projects     |
+| url         | text        | NO       |                   |
+| caption     | text        | YES      |                   |
+| uploaded_by | text        | YES      |                   |
+| created_at  | timestamptz | YES      | now()             |
+
+**reserves**
+| Colonne            | Type        | Nullable | Défaut            |
+|--------------------|-------------|----------|-------------------|
+| id                 | uuid        | NO       | gen_random_uuid() |
+| project_id         | uuid        | NO       | FK → projects     |
+| title              | text        | NO       |                   |
+| description        | text        | YES      |                   |
+| photo_url          | text        | YES      |                   |
+| resolved_photo_url | text        | YES      |                   |
+| assigned_to        | uuid        | YES      | FK → auth.users   |
+| lot                | text        | YES      |                   |
+| priority           | text        | YES      | 'medium'          |
+| status             | text        | YES      | 'open'            |
+| resolved_at        | timestamptz | YES      |                   |
+| created_at         | timestamptz | YES      | now()             |
+| updated_at         | timestamptz | YES      | now()             |
+
+
 
 **artisan_tokens**
-- Per-task unique access tokens
-- Named artisan associations
-- Project and task scope limitation
+| Colonne      | Type        | Nullable | Défaut            |
+|--------------|-------------|----------|-------------------|
+| id           | uuid        | NO       | gen_random_uuid() |
+| project_id   | uuid        | YES      | FK → projects     |
+| task_id      | uuid        | YES      | FK → tasks        |
+| artisan_name | text        | NO       |                   |
+| token        | text        | NO       | UNIQUE            |
+| phone        | text        | YES      |                   |
+| created_at   | timestamptz | YES      | now()             |
 
-### Key Relationships
+
+
+**artisan_documents**
+| Colonne          | Type        | Nullable | Défaut            |
+|------------------|-------------|----------|-------------------|
+| id               | uuid        | NO       | gen_random_uuid() |
+| project_id       | uuid        | NO       | FK → projects     |
+| artisan_token_id | uuid        | YES      | FK → artisan_tokens |
+| artisan_name     | text        | NO       |                   |
+| type             | text        | NO       |                   |
+| label            | text        | YES      |                   |
+| file_url         | text        | NO       |                   |
+| status           | text        | YES      | 'pending'         |
+| expiry_date      | date        | YES      |                   |
+| uploaded_by      | text        | YES      | 'artisan'         |
+| created_at       | timestamptz | YES      | now()             |
+| updated_at       | timestamptz | YES      | now()             |
+
+**reports**
+| Colonne    | Type        | Nullable | Défaut            |
+|------------|-------------|----------|-------------------|
+| id         | uuid        | NO       | gen_random_uuid() |
+| project_id | uuid        | NO       | FK → projects     |
+| pdf_url    | text        | YES      |                   |
+| filename   | text        | YES      |                   |
+| notes      | text        | YES      |                   |
+| sent_to    | jsonb       | YES      | '[]'              |
+| sent_count | integer     | YES      | 0                 |
+| created_at | timestamptz | YES      | now()             |
+
+**report_recipients**
+| Colonne         | Type        | Nullable | Défaut                    |
+|-----------------|-------------|----------|---------------------------|
+| id              | uuid        | NO       | gen_random_uuid()         |
+| report_id       | uuid        | NO       | FK → reports              |
+| project_id      | uuid        | NO       | FK → projects             |
+| recipient_email | text        | NO       |                           |
+| recipient_name  | text        | YES      |                           |
+| tracking_token  | text        | YES      | UNIQUE, gen_random_uuid() |
+| sent_at         | timestamptz | YES      | now()                     |
+| opened_at       | timestamptz | YES      |                           |
+| open_count      | integer     | YES      | 0                         |
+| last_opened_at  | timestamptz | YES      |                           |
+
+**reminders**
+| Colonne             | Type        | Nullable | Défaut            |
+|---------------------|-------------|----------|-------------------|
+| id                  | uuid        | NO       | gen_random_uuid() |
+| project_id          | uuid        | NO       | FK → projects     |
+| task_id             | uuid        | YES      | FK → tasks        |
+| type                | text        | NO       |                   |
+| recipient_email     | text        | NO       |                   |
+| recipient_name      | text        | YES      |                   |
+| trigger_days_before | integer     | YES      | 2                 |
+| scheduled_at        | timestamptz | YES      |                   |
+| sent_at             | timestamptz | YES      |                   |
+| status              | text        | YES      | 'pending'         |
+| subject             | text        | YES      |                   |
+| body                | text        | YES      |                   |
+| created_by          | uuid        | YES      | FK → auth.users   |
+| created_at          | timestamptz | YES      | now()             |
+
+**budget_history**
+| Colonne       | Type        | Nullable | Défaut            |
+|---------------|-------------|----------|-------------------|
+| id            | uuid        | NO       | gen_random_uuid() |
+| project_id    | uuid        | NO       | FK → projects     |
+| task_id       | uuid        | YES      | FK → tasks        |
+| type          | text        | NO       |                   |
+| amount_before | numeric     | YES      |                   |
+| amount_after  | numeric     | YES      |                   |
+| note          | text        | YES      |                   |
+| created_by    | uuid        | YES      | FK → auth.users   |
+| created_at    | timestamptz | YES      | now()             |
+
+**activity_feed**
+| Colonne      | Type        | Nullable | Défaut            |
+|--------------|-------------|----------|-------------------|
+| id           | uuid        | NO       | gen_random_uuid() |
+| project_id   | uuid        | NO       | FK → projects     |
+| project_name | text        | YES      |                   |
+| type         | text        | NO       |                   |
+| actor_name   | text        | YES      |                   |
+| actor_type   | text        | YES      |                   |
+| description  | text        | NO       |                   |
+| entity_id    | uuid        | YES      |                   |
+| entity_type  | text        | YES      |                   |
+| created_at   | timestamptz | YES      | now()             |
+
+**project_imports**
+| Colonne           | Type        | Nullable | Défaut            |
+|-------------------|-------------|----------|-------------------|
+| id                | uuid        | NO       | gen_random_uuid() |
+| project_id        | uuid        | YES      | FK → projects     |
+| original_filename | text        | YES      |                   |
+| contractor_name   | text        | YES      |                   |
+| total_lots        | integer     | YES      |                   |
+| total_tasks       | integer     | YES      |                   |
+| total_budget_ht   | numeric     | YES      |                   |
+| ai_notes          | text        | YES      |                   |
+| confidence        | text        | YES      |                   |
+| duration_source   | text        | YES      |                   |
+| import_date       | timestamptz | YES      | now()             |
+| created_at        | timestamptz | YES      | now()             |
+
+**lot_duration_benchmarks**
+| Colonne            | Type        | Nullable | Défaut            |
+|--------------------|-------------|----------|-------------------|
+| id                 | uuid        | NO       | gen_random_uuid() |
+| lot_type           | text        | NO       |                   |
+| budget_min         | numeric     | YES      |                   |
+| budget_max         | numeric     | YES      |                   |
+| project_size       | text        | YES      |                   |
+| duration_days_p25  | integer     | YES      |                   |
+| duration_days_p50  | integer     | YES      |                   |
+| duration_days_p75  | integer     | YES      |                   |
+| sample_count       | integer     | YES      | 0                 |
+| created_at         | timestamptz | YES      | now()             |
+
+**visits** ⭐ NEW — Module 1
+| Colonne    | Type        | Nullable | Défaut                    |
+|------------|-------------|----------|---------------------------|
+| id         | uuid        | NO       | gen_random_uuid()         |
+| project_id | uuid        | NO       | FK → projects ON DELETE CASCADE |
+| user_id    | uuid        | YES      | FK → auth.users           |
+| date       | date        | NO       |                           |
+| object     | text        | YES      |                           |
+| phase      | text        | YES      | 'suivi_chantier'          |
+| zone       | text        | YES      |                           |
+| notes      | text        | YES      |                           |
+| created_at | timestamptz | YES      | now()                     |
+| updated_at | timestamptz | YES      | now()                     |
+
+Valeurs phase : 'suivi_chantier' | 'opr' | 'reception' | 'livraison'
+
+**visit_attendees** ⭐ NEW — Module 1
+| Colonne    | Type        | Nullable | Défaut                    |
+|------------|-------------|----------|---------------------------|
+| id         | uuid        | NO       | gen_random_uuid()         |
+| visit_id   | uuid        | NO       | FK → visits ON DELETE CASCADE |
+| name       | text        | NO       |                           |
+| company    | text        | YES      |                           |
+| role       | text        | YES      |                           |
+| status     | text        | YES      | 'convoque'                |
+| penalty    | boolean     | YES      | false                     |
+| created_at | timestamptz | YES      | now()                     |
+
+Valeurs status : 'present' | 'absent' | 'excuse' | 'absent_non_excuse' | 'convoque'
+
+---
+
+### Relations clés
 - projects → tasks (1:many)
+- projects → reserves (1:many)
+- projects → visits (1:many) ⭐ NEW
+- projects → activity_feed (1:many)
+- projects → reports (1:many)
+- projects → reminders (1:many)
+- projects → artisan_tokens (1:many)
+- projects → artisan_documents (1:many)
+- projects → budget_history (1:many)
 - tasks → photos (1:many)
-- projects ← artisan_tokens (many:1)
 - tasks ← artisan_tokens (many:1)
+- tasks → budget_history (1:many)
+- tasks → reminders (1:many)
+- reports → report_recipients (1:many)
+- visits → visit_attendees (1:many) ⭐ NEW
 
-### Row Level Security (RLS)
-- **projects**: Users access only their own projects; public read via portal_enabled
-- **tasks**: Inherited from project ownership; public read for portal access
-- **photos**: Follow task access patterns; INSERT allowed for portals and tokens
-- **artisan_tokens**: User CRUD for owned projects; public SELECT by token value
+---
 
+### RLS — Pattern uniforme du projet
+Toutes les tables protégées suivent ce pattern :
+```sql
+project_id IN (SELECT id FROM projects WHERE user_id = auth.uid())
+```
+Exceptions notables :
+- artisan_tokens : SELECT public (accès par valeur du token)
+- photos : SELECT public si portal_enabled = true
+- tasks : SELECT public si portal_enabled = true, UPDATE public via artisan_tokens
+- visit_attendees : accès via JOIN visits → projects → user_id
+- activity_feed : INSERT public (anyone can insert)
+- lot_duration_benchmarks : SELECT public, INSERT public
+
+---
+
+### Tables prévues — Prochaines migrations
+(Module 2) reserves : +visit_id, +number, +type, +chapter, +sub_chapter, +plan_id, +plan_x, +plan_y ; +table reserve_status_history
+(Module 3) +project_zones, +project_plans
+(Module 4) +report_templates
+(Module 5) +service_orders
 ## 5. KEY CONCEPTS
 
 ### 3-Layer Access Model
 
 **Architect (Authenticated via Supabase Auth)**
-- Full CRUD on projects, tasks, photos
-- Project settings and portal management
-- Artisan token generation and management
-- Dashboard with project overview and stats
+- **Project Management**: Full CRUD on projects, tasks, photos, reserves
+- **AI-Powered Import**: Upload DPGF documents for automatic project creation
+- **PDF Reporting**: Generate professional project reports with one click
+- **Reserves Management**: Create, assign, and track defect resolution
+- **Email Automation**: Automated reminders and notifications via Brevo
+- **Activity Monitoring**: Real-time feed of all project activities
+- **Portal Control**: Enable/disable client access, manage artisan tokens
+- **Dashboard**: Comprehensive overview with stats, activity feed, reserves summary
 
 **Client (Portal Token Access)**
-- View project details and progress
-- Browse task timeline and photos
-- No authentication required, just portal token
-- Read-only access when portal_enabled=true
+- **Real-time Progress**: Live project timeline with photo galleries
+- **Interactive Timeline**: Browse task progression with visual indicators
+- **Photo Galleries**: View all project photos organized by tasks
+- **No Authentication**: Simple token-based access via shareable URL
+- **Professional Experience**: Branded interface matching architect's identity
 
 **Artisan (Task-specific Token Access)**
-- Access specific task via unique token
-- Mark tasks as completed (update progress to 100%)
-- Upload progress photos with drag-drop
-- Minimal interface focused on task execution
+- **Task-Focused Interface**: Access only assigned tasks via unique tokens
+- **Progress Confirmation**: Mark tasks completed with photo documentation
+- **Photo Upload**: Drag-drop interface for progress documentation
+- **Email Notifications**: Automated reminders for overdue tasks
+- **Reserve Resolution**: Respond to assigned defects with photos and notes
+- **Mobile-Optimized**: Interface designed for on-site mobile usage
 
 ### Portal Tokens
 - UUID-based tokens stored in projects.portal_token
@@ -159,47 +488,106 @@ src/
 3. **completed** (100% progress) - Task finished
 
 ### Photo Management
-- Supabase Storage with public bucket
-- Organized by project/task hierarchy
-- Support for JPEG, PNG, HEIC formats
-- 10MB file size limit
-- Lightbox viewer for photo browsing
+- **Supabase Storage** with public bucket and CDN delivery
+- **Multi-context Storage**: Organized by project/task/reserves hierarchy
+- **Format Support**: JPEG, PNG, HEIC with automatic optimization
+- **Upload Limits**: 10MB file size with progress indicators
+- **Lightbox Viewer**: Professional photo browsing with navigation
+- **Metadata Tracking**: Upload timestamp, actor identification, captions
+
+### ⭐ AI-Powered DPGF Import System
+- **Document Analysis**: PDF parsing with AI extraction of lots, budgets, deadlines
+- **Intelligent Planning**: Automatic task creation with dependencies and scheduling
+- **Preview & Validation**: Review extracted data before project creation
+- **Progress Indicators**: Real-time feedback during 20-second processing
+- **Error Handling**: Comprehensive validation and user feedback
+- **Workflow Integration**: Seamless transition from import to project management
+
+### ⭐ Professional PDF Reports
+- **Branded Design**: Custom styling with architect's color scheme (#FF7A3D)
+- **Comprehensive Data**: Project info, task details, progress statistics, timeline
+- **Photo Integration**: Task photos embedded in reports
+- **Professional Layout**: Multi-page reports with headers, sections, and footers
+- **One-Click Generation**: Instant PDF creation with @react-pdf/renderer
+- **Email Distribution**: Direct sending to clients with tracking
+
+### ⭐ Reserves Management System
+- **Complete Lifecycle**: Create, assign, track, and resolve construction defects
+- **Priority Matrix**: Critical, High, Medium, Low with visual indicators
+- **Status Workflow**: Open → In Progress → Resolved with timestamp tracking
+- **Photo Documentation**: Before/after photos for issue verification
+- **Artisan Assignment**: Direct assignment with email notifications
+- **Resolution Tracking**: Notes, timestamps, and completion verification
+
+### ⭐ Email Automation System
+- **Brevo Integration**: Professional email service with templates
+- **Automated Reminders**: Task overdue notifications with smart scheduling
+- **Reserve Notifications**: Assignment alerts with priority indicators
+- **Report Distribution**: PDF reports sent with open tracking
+- **Template System**: Branded email templates with CTA buttons
+- **Delivery Tracking**: Monitor email opens and engagement
+
+### ⭐ Activity Feed & Monitoring
+- **Real-time Updates**: Live activity stream across all projects
+- **Action Types**: Photo uploads, task completions, reserve events
+- **Actor Attribution**: Track actions by architect, artisan, or client
+- **Timeline View**: Chronological project activity with timestamps
+- **Dashboard Integration**: Central monitoring for all projects
+- **Performance Insights**: Activity patterns and engagement metrics
 
 ## 6. ENVIRONMENT VARIABLES
 
 ```bash
 # Supabase Configuration (required)
-NEXT_PUBLIC_SUPABASE_URL=your-supabase-url
+NEXT_PUBLIC_SUPABASE_URL=your-supabase-project-url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your-supabase-anon-key
 
-# Next.js (auto-generated)
+# Email Service (required for automation)
+BREVO_API_KEY=your-brevo-api-key
+
+# Next.js Configuration
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-secret
+NEXTAUTH_SECRET=your-secret-key
+
+# Optional: Third-party Integrations
+PASCAL_API_KEY=your-pascal-integration-key
 ```
 
-## 7. CURRENT BUGS & KNOWN ISSUES
+### Environment Setup Notes
+- **BREVO_API_KEY**: Required for email automation (reminders, reports, notifications)
+- **Supabase Storage**: Ensure public bucket permissions for photo uploads
+- **Domain Configuration**: Update NEXTAUTH_URL for production deployment
+- **Pascal Integration**: Optional for advanced 3D model viewing features
 
-### Critical Bugs
-1. **frappe-gantt ChunkLoadError**: Dynamic import fails in production build
-   - Solution: Replace with `next/dynamic` + `ssr: false`
+## 7. CURRENT STATUS & KNOWN ISSUES
 
-2. **Artisan photo upload flow**: Missing "Envoyer" button confirmation
-   - Files are staged but no clear send action
-   - Solution: Add Send button + success feedback
+### 🟢 Recently Resolved
+- ✅ **frappe-gantt ChunkLoadError**: Resolved with proper dynamic imports
+- ✅ **UI Design System**: Completed shadcn/ui integration with consistent styling
+- ✅ **Landing Page**: Fully redesigned with Three.js animation and scroll effects
+- ✅ **PDF Reports**: Professional report generation system implemented
+- ✅ **Reserves Management**: Complete defect tracking system operational
+- ✅ **Email Automation**: Brevo integration with template system working
 
-3. **Client portal photo visibility**: Artisan-uploaded photos not showing in client portal
-   - RLS policy issue or photo association problem
-   - Photos uploaded via artisan tokens should appear in client timeline
+### 🟡 Current Minor Issues
+1. **Mobile Responsiveness**: Landing page animations need mobile optimization
+2. **Email Rate Limiting**: Brevo API calls need rate limiting for high volume
+3. **DPGF Import Accuracy**: AI extraction may need fine-tuning for complex documents
+4. **Three.js Performance**: Blueprint animation could be optimized for slower devices
+5. **Storage Cleanup**: Orphaned photos from deleted projects need garbage collection
 
-4. **Supabase storage anon policy**: Anonymous uploads may be blocked
-   - Storage RLS needs anon INSERT permissions for photos bucket
-   - Critical for both client portal and artisan uploads
+### 🟠 Enhancement Opportunities
+1. **Error Boundaries**: Production error handling for React components
+2. **Offline Support**: PWA capabilities for artisan mobile usage
+3. **Performance Monitoring**: Real-time metrics for application performance
+4. **Accessibility**: WCAG compliance for inclusive design
+5. **Internationalization**: Multi-language support beyond French
 
-### Minor Issues
-- Demo data hardcoded in components (acceptable for MVP)
-- No error boundaries for production resilience
-- Photo upload progress indicators could be improved
-- Mobile responsiveness needs testing
+### 🔧 Technical Debt
+- Some demo data still hardcoded in components (acceptable for MVP)
+- TypeScript strict mode enforcement across all components
+- Unit test coverage for critical business logic
+- API documentation for third-party integrations
 
 ## 8. DEVELOPMENT COMMANDS
 
@@ -255,38 +643,51 @@ npm run lint         # Run ESLint checks
 
 ## 10. FEATURE ROADMAP
 
-### P0 (MVP Complete) ✅
+### ✅ P0 (MVP Complete - ACHIEVED)
 - [x] User authentication (Supabase Auth)
-- [x] Project CRUD operations
-- [x] Task management with Gantt charts
-- [x] Photo upload and gallery
-- [x] Client portal access
-- [x] Artisan task access
-- [x] Basic responsive design
+- [x] Project CRUD operations with enhanced metadata
+- [x] Task management with interactive Gantt charts
+- [x] Professional photo upload and galleries
+- [x] Client portal with real-time progress tracking
+- [x] Artisan task access with mobile optimization
+- [x] Responsive design across all interfaces
 
-### P1 (Current Sprint) 🚧
-- [ ] **Bug Fixes**: frappe-gantt, artisan upload flow, photo visibility, storage policies
-- [ ] **PDF Reports**: Generate project progress reports with @react-pdf/renderer
-- [ ] **Réserves Management**: Punch list system for construction defects
-- [ ] **UI Redesign**: shadcn/ui components with orange accent (#E8650A)
+### ✅ P1 (Advanced Features - COMPLETED)
+- [x] **AI-Powered DPGF Import**: Automatic project creation from PDF documents
+- [x] **Professional PDF Reports**: Branded, comprehensive project reporting
+- [x] **Reserves Management**: Complete defect tracking and resolution system
+- [x] **Email Automation**: Brevo integration with smart notifications
+- [x] **UI Design System**: shadcn/ui components with #FF7A3D accent theme
+- [x] **Activity Monitoring**: Real-time feed across all project activities
+- [x] **Landing Page Redesign**: Immersive Three.js blueprint animation
+- [x] **3D Model Integration**: Pascal.app viewer for architectural models
 
-### P2 (Next Phase) 📋
-- [ ] Real-time collaboration features
-- [ ] Advanced project templates
-- [ ] Email notifications via Brevo
-- [ ] Mobile app (React Native)
-- [ ] Multi-language support
-- [ ] Advanced reporting and analytics
+### 🚧 P2 (Optimization & Scale - CURRENT)
+- [ ] **Mobile PWA**: Offline-capable progressive web app for artisans
+- [ ] **Performance Optimization**: Three.js animation optimization for mobile devices
+- [ ] **Advanced Analytics**: Project timeline analysis and performance insights
+- [ ] **Multi-language Support**: English and additional European languages
+- [ ] **API Documentation**: Public API for third-party integrations
+- [ ] **Automated Testing**: Comprehensive test suite for critical workflows
 
-### P3 (Future) 🔮
-- [ ] Integration with CAD software
-- [ ] AI-powered project insights
-- [ ] Multi-company workspace support
-- [ ] Advanced workflow automation
-- [ ] API for third-party integrations
+### 📋 P3 (Enterprise Features - NEXT)
+- [ ] **Multi-company Workspace**: Agency and contractor collaboration platform
+- [ ] **Advanced CAD Integration**: Direct import from Revit, AutoCAD, SketchUp
+- [ ] **AI Project Insights**: Predictive analytics for timeline and budget
+- [ ] **Advanced Workflow Automation**: Custom triggers and actions
+- [ ] **White-label Solutions**: Branded instances for large architecture firms
+- [ ] **Enterprise SSO**: Active Directory and SAML integration
+
+### 🔮 P4 (Innovation - FUTURE)
+- [ ] **AR/VR Integration**: On-site augmented reality project visualization
+- [ ] **IoT Site Monitoring**: Real-time construction site data integration
+- [ ] **Blockchain Verification**: Immutable project milestone verification
+- [ ] **AI Design Assistant**: Intelligent project planning recommendations
+- [ ] **Drone Integration**: Aerial progress documentation automation
 
 ---
 
 **Last Updated**: March 2026
-**Version**: MVP v0.1.0
-**Status**: Development Phase - P1 Sprint
+**Version**: v1.0.0 (Advanced Features Complete)
+**Status**: Production Ready - P2 Optimization Phase
+**Next Milestone**: Mobile PWA & Performance Optimization (Q2 2026)
